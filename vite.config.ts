@@ -13,7 +13,7 @@ export default defineConfig({
   server: {
     port: 5174, // Use 5174 to avoid conflict with Visitor_2
     host: true,
-    https: true,
+    // https: true,
     proxy: {
       '/api': {
         target: 'http://localhost:5001',

@@ -10,10 +10,20 @@ export const list = query({
 
 export const create = mutation({
     args: {
+        driverId: v.string(),
         name: v.string(),
-        licenseNumber: v.string(),
         phoneNumber: v.string(),
+        dob: v.optional(v.string()),
+        bloodGroup: v.optional(v.string()),
+        photo: v.optional(v.string()),
+        licenseNumber: v.string(),
+        licenseType: v.array(v.string()),
+        licenseIssueDate: v.optional(v.string()),
+        licenseValidity: v.optional(v.string()),
+        licenseIssuedBy: v.optional(v.string()),
         status: v.string(),
+        addedBy: v.optional(v.string()),
+        addedDate: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const existing = await ctx.db
@@ -23,7 +33,7 @@ export const create = mutation({
             )
             .unique();
         if (existing) {
-            throw new Error("Driver already exists");
+            throw new Error("Driver with this license already exists");
         }
         return await ctx.db.insert("drivers", args);
     },
@@ -32,10 +42,20 @@ export const create = mutation({
 export const update = mutation({
     args: {
         id: v.id("drivers"),
+        driverId: v.string(),
         name: v.string(),
-        licenseNumber: v.string(),
         phoneNumber: v.string(),
+        dob: v.optional(v.string()),
+        bloodGroup: v.optional(v.string()),
+        photo: v.optional(v.string()),
+        licenseNumber: v.string(),
+        licenseType: v.array(v.string()),
+        licenseIssueDate: v.optional(v.string()),
+        licenseValidity: v.optional(v.string()),
+        licenseIssuedBy: v.optional(v.string()),
         status: v.string(),
+        addedBy: v.optional(v.string()),
+        addedDate: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const { id, ...data } = args;

@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { Shield, Truck, Users, LayoutDashboard } from "lucide-react";
 
 interface PageWrapperProps {

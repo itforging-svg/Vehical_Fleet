@@ -9,8 +9,13 @@ interface InternalMovementProps {
 }
 
 export default function InternalMovement({ onBack }: InternalMovementProps) {
-    const vehicles = useQuery(api.vehicles.list) || [];
-    const drivers = useQuery(api.drivers.list) || [];
+    const vehiclesQueryResult = useQuery(api.vehicles.list);
+    const driversQueryResult = useQuery(api.drivers.list);
+
+    const vehicles = vehiclesQueryResult || [];
+    const drivers = driversQueryResult || [];
+    const isLoading = vehiclesQueryResult === undefined || driversQueryResult === undefined;
+
     const createTrip = useMutation(api.trips.assignVehicle);
     const createRequest = useMutation(api.trips.createRequest);
 
@@ -105,11 +110,15 @@ export default function InternalMovement({ onBack }: InternalMovementProps) {
                                 className="input-field py-3.5"
                                 value={formData.vehicleId}
                                 onChange={e => setFormData({ ...formData, vehicleId: e.target.value })}
+                                disabled={isLoading}
                             >
-                                <option value="">Select Vehicle</option>
+                                <option value="">{isLoading ? "Loading vehicles..." : "Select Vehicle"}</option>
                                 {vehicles.map(v => (
-                                    <option key={v._id} value={v._id}>{v.registrationNumber}</option>
+                                    <option key={v._id} value={v._id}>{v.registrationNumber} ({v.model})</option>
                                 ))}
+                                {!isLoading && vehicles.length === 0 && (
+                                    <option disabled>No vehicles available</option>
+                                )}
                             </select>
                         </div>
                         <div className="space-y-3">
@@ -119,11 +128,15 @@ export default function InternalMovement({ onBack }: InternalMovementProps) {
                                 className="input-field py-3.5"
                                 value={formData.driverId}
                                 onChange={e => setFormData({ ...formData, driverId: e.target.value })}
+                                disabled={isLoading}
                             >
-                                <option value="">Select Driver</option>
+                                <option value="">{isLoading ? "Loading drivers..." : "Select Driver"}</option>
                                 {drivers.map(d => (
                                     <option key={d._id} value={d._id}>{d.name}</option>
                                 ))}
+                                {!isLoading && drivers.length === 0 && (
+                                    <option disabled>No drivers available</option>
+                                )}
                             </select>
                         </div>
                         <div className="space-y-3">
@@ -160,15 +173,19 @@ export default function InternalMovement({ onBack }: InternalMovementProps) {
 
                     <button
                         type="submit"
-                        disabled={isSubmitting}
-                        className="btn-primary w-full py-4 rounded-xl text-lg shadow-orange-500/10"
+                        disabled={isSubmitting || isLoading}
+                        className="btn-primary w-full py-4 rounded-xl text-lg shadow-orange-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isSubmitting ? "LOGGING..." : "LOG MOVEMENT"}
                     </button>
+
+                    {!isLoading && (vehicles.length === 0 || drivers.length === 0) && (
+                        <p className="text-[10px] text-center text-red-500 font-bold uppercase tracking-wider">
+                            Warning: No data found. Please run the seeding script.
+                        </p>
+                    )}
                 </form>
             </div>
         </PageWrapper>
-    );
-}
     );
 }

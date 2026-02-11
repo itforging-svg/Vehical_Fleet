@@ -1,0 +1,232 @@
+# Requirements Document
+
+## Introduction
+
+This document specifies the requirements for a Vehicle Fleet Management System designed to manage internal vehicle movement within an organization. The system tracks vehicle usage, fuel consumption, maintenance schedules, compliance requirements, and provides a comprehensive booking workflow with role-based access control.
+
+## Glossary
+
+- **System**: The Vehicle Fleet Management System
+- **Vehicle**: Any motorized transport asset managed by the organization (trucks, cars, bikes, heavy vehicles, etc.)
+- **Booking**: A reservation request for vehicle usage during a specific time period
+- **User**: Any authenticated person who can request vehicles
+- **Security_Admin**: User role responsible for allocating vehicles to booking requests
+- **Admin**: User role with full system access including vehicle master data management
+- **Driver**: Person authorized to operate vehicles
+- **PUC**: Pollution Under Control certificate
+- **LV**: Light Vehicle category
+- **HV**: Heavy Vehicle category
+- **Inward**: Vehicle entry into organization premises
+- **Outward**: Vehicle exit from organization premises
+- **Booking_Slip**: PDF document containing booking confirmation details
+- **Audit_Log**: Immutable record of system actions and changes
+
+## Requirements
+
+### Requirement 1: Vehicle Usage and Fuel Tracking
+
+**User Story:** As an admin, I want to track vehicle running distance and fuel consumption over different time periods, so that I can analyze operational costs and efficiency.
+
+#### Acceptance Criteria
+
+1. WHEN a vehicle completes a trip, THE System SHALL record the distance traveled in kilometers
+2. WHEN a vehicle is refueled, THE System SHALL record the fuel quantity and cost
+3. WHEN an admin requests usage reports, THE System SHALL generate reports for daily, weekly, monthly, and yearly periods
+4. FOR ALL usage reports, THE System SHALL include total distance traveled and total fuel consumed
+5. WHEN calculating fuel efficiency, THE System SHALL compute kilometers per liter for each vehicle
+
+### Requirement 2: Vehicle Booking Request
+
+**User Story:** As a user, I want to request a vehicle by filling out a booking form, so that I can obtain transportation for official purposes.
+
+#### Acceptance Criteria
+
+1. WHEN a user submits a booking request, THE System SHALL capture pickup location, drop location, expected kilometers, purpose, booking date and time, and vehicle category
+2. WHEN a user submits a booking request, THE System SHALL allow the user to specify whether a driver is required
+3. WHEN a user marks a booking as emergency, THE System SHALL flag it with high priority
+4. WHEN a booking request is submitted, THE System SHALL assign a unique booking ID following the format [ORG]-[VehicleType]-[DDMMYYYY]-[Sequence]
+5. WHEN multiple bookings are created on the same day, THE System SHALL increment the sequence number for each booking
+6. WHEN a new day begins, THE System SHALL reset the booking sequence to 01
+
+### Requirement 3: Vehicle Allocation by Security Admin
+
+**User Story:** As a Security Admin, I want to review and allocate vehicles to booking requests, so that I can manage vehicle availability efficiently.
+
+#### Acceptance Criteria
+
+1. WHEN a Security_Admin views pending requests, THE System SHALL display only bookings with status "Pending"
+2. WHEN a Security_Admin approves a booking, THE System SHALL change the booking status to "Approved" and mark the vehicle as "Booked"
+3. WHEN a Security_Admin rejects a booking, THE System SHALL require a mandatory rejection reason
+4. WHEN a Security_Admin modifies booking time, THE System SHALL validate that the vehicle is available during the new time window
+5. WHEN a Security_Admin reassigns a vehicle, THE System SHALL show only available vehicles of the same category
+6. WHEN a Security_Admin suggests an alternate vehicle, THE System SHALL notify the requesting user
+7. WHEN viewing booking requests, THE System SHALL provide a calendar timeline view showing all bookings
+
+### Requirement 4: Vehicle Master Data Management
+
+**User Story:** As an admin, I want to add and manage vehicle information in the system, so that I can maintain an accurate inventory of fleet assets.
+
+#### Acceptance Criteria
+
+1. WHEN an admin adds a vehicle, THE System SHALL require vehicle ID, category (LV/HV), type, fuel type, capacity, and status
+2. WHERE a vehicle type is specified, THE System SHALL accept only: Truck, Hydra, JCB, Dumper, Car, or Bike
+3. WHEN an admin assigns a driver to a vehicle, THE System SHALL validate that the driver exists and is available
+4. WHEN an admin updates vehicle status, THE System SHALL accept only: Available, Booked, Maintenance, or Blacklisted
+5. WHEN a vehicle is marked as Blacklisted, THE System SHALL prevent it from appearing in booking suggestions
+
+### Requirement 5: Compliance Tracking
+
+**User Story:** As an admin, I want to track PUC and insurance expiry dates, so that I can ensure regulatory compliance and avoid penalties.
+
+#### Acceptance Criteria
+
+1. WHEN an admin adds or updates a vehicle, THE System SHALL require PUC expiry date and insurance expiry date
+2. WHEN a PUC expiry date is within 30 days, THE System SHALL generate an alert notification
+3. WHEN an insurance expiry date is within 30 days, THE System SHALL generate an alert notification
+4. WHEN a PUC or insurance has expired, THE System SHALL automatically change the vehicle status to "Maintenance"
+5. WHEN viewing compliance alerts, THE System SHALL display all vehicles with upcoming or expired documents
+
+### Requirement 6: Role-Based Access Control
+
+**User Story:** As a system administrator, I want to implement role-based access control, so that users can only access features appropriate to their role.
+
+#### Acceptance Criteria
+
+1. WHEN a user logs in, THE System SHALL authenticate the user and assign appropriate role permissions
+2. WHEN a user with "User" role accesses the system, THE System SHALL allow only booking creation and viewing own bookings
+3. WHEN a user with "Security_Admin" role accesses the system, THE System SHALL allow booking approval, rejection, and vehicle allocation
+4. WHEN a user with "Admin" role accesses the system, THE System SHALL allow all operations including vehicle master management and report generation
+5. WHEN a user attempts an unauthorized action, THE System SHALL deny access and log the attempt
+
+### Requirement 7: Audit Logging
+
+**User Story:** As an admin, I want to maintain audit logs of all system actions, so that I can track changes and ensure accountability.
+
+#### Acceptance Criteria
+
+1. WHEN any user performs an action, THE System SHALL record the user ID, action type, timestamp, and affected entity
+2. WHEN a booking status changes, THE System SHALL log the previous status, new status, and the user who made the change
+3. WHEN a vehicle master record is modified, THE System SHALL log all changed fields with old and new values
+4. WHEN an admin views audit logs, THE System SHALL display logs in reverse chronological order
+5. WHEN filtering audit logs, THE System SHALL support filtering by date range, user, action type, and entity
+
+### Requirement 8: Admin Dashboard Metrics
+
+**User Story:** As an admin, I want to view key metrics on a dashboard, so that I can monitor fleet operations at a glance.
+
+#### Acceptance Criteria
+
+1. WHEN an admin accesses the dashboard, THE System SHALL display total vehicle count
+2. WHEN displaying vehicle status breakdown, THE System SHALL show counts for Available, Booked, and Maintenance statuses
+3. WHEN displaying daily activity, THE System SHALL show today's inward and outward movement counts
+4. WHEN displaying pending approvals, THE System SHALL show the count of bookings with "Pending" status
+5. WHEN dashboard data is requested, THE System SHALL compute metrics in real-time from current system state
+
+### Requirement 9: Maintenance Module
+
+**User Story:** As an admin, I want to track vehicle maintenance activities, so that I can ensure vehicles are properly maintained and minimize downtime.
+
+#### Acceptance Criteria
+
+1. WHEN an admin schedules maintenance, THE System SHALL record the vehicle ID, maintenance type, scheduled date, and estimated cost
+2. WHEN a vehicle breaks down, THE System SHALL allow logging of breakdown details including date, issue description, and location
+3. WHEN maintenance is completed, THE System SHALL record actual cost and completion date
+4. WHEN a vehicle is under maintenance, THE System SHALL calculate downtime as the duration between maintenance start and completion
+5. WHEN a scheduled maintenance date is within 7 days, THE System SHALL generate a maintenance alert
+6. WHEN viewing maintenance history, THE System SHALL display all maintenance records for a selected vehicle
+
+### Requirement 10: Driver Management
+
+**User Story:** As an admin, I want to manage driver information and track their availability, so that I can assign drivers to vehicle bookings efficiently.
+
+#### Acceptance Criteria
+
+1. WHEN an admin adds a driver, THE System SHALL require driver name, license number, license expiry date, and contact information
+2. WHEN a driver license expiry date is within 30 days, THE System SHALL generate an alert notification
+3. WHEN an admin updates driver availability status, THE System SHALL accept only: Available, On_Duty, or On_Leave
+4. WHEN a driver is assigned to a booking, THE System SHALL log the assignment in driver utilization logs
+5. WHEN viewing driver utilization, THE System SHALL display total trips, total kilometers driven, and total hours for each driver
+
+### Requirement 11: Inward and Outward Tracking
+
+**User Story:** As a security admin, I want to track vehicle entry and exit times, so that I can maintain gate-level audit trails.
+
+#### Acceptance Criteria
+
+1. WHEN a vehicle exits the premises, THE System SHALL record the outward time and odometer reading
+2. WHEN a vehicle enters the premises, THE System SHALL record the inward time and odometer reading
+3. WHEN recording inward movement, THE System SHALL calculate trip distance as the difference between inward and outward odometer readings
+4. WHEN a vehicle has an outward record without corresponding inward record, THE System SHALL flag it as "Out on Trip"
+5. WHEN viewing gate audit trail, THE System SHALL display all inward and outward movements with timestamps
+
+### Requirement 12: Booking Conflict Detection
+
+**User Story:** As a user, I want the system to detect booking conflicts, so that I don't request vehicles that are already allocated.
+
+#### Acceptance Criteria
+
+1. WHEN a user submits a booking request, THE System SHALL check if the requested vehicle is available during the specified time window
+2. WHEN a time conflict is detected, THE System SHALL prevent the booking and display an error message
+3. WHEN no conflict exists, THE System SHALL allow the booking to proceed
+4. WHEN suggesting alternate vehicles, THE System SHALL show only vehicles of the same category that are available during the requested time
+5. WHEN a booking is cancelled, THE System SHALL immediately mark the vehicle as available for that time slot
+
+### Requirement 13: Booking History and Search
+
+**User Story:** As a user, I want to view and search my booking history, so that I can track past vehicle usage.
+
+#### Acceptance Criteria
+
+1. WHEN a user views booking history, THE System SHALL display all bookings created by that user
+2. WHEN an admin views booking history, THE System SHALL display all bookings in the system
+3. WHEN searching bookings, THE System SHALL support filtering by date range, vehicle ID, status, and department
+4. WHEN displaying booking history, THE System SHALL show booking ID, vehicle details, dates, status, and purpose
+5. WHEN a user selects a booking, THE System SHALL display complete booking details including approval history
+
+### Requirement 14: Booking Modification and Cancellation
+
+**User Story:** As a user, I want to modify or cancel my booking before approval, so that I can adjust to changing requirements.
+
+#### Acceptance Criteria
+
+1. WHEN a user attempts to modify a booking, THE System SHALL allow modification only if the booking status is "Pending"
+2. WHEN a user modifies a booking, THE System SHALL re-validate vehicle availability for the new time window
+3. WHEN a user cancels a booking, THE System SHALL change the status to "Cancelled" and free the vehicle allocation
+4. WHEN a booking is already approved, THE System SHALL prevent user modification and display an appropriate message
+5. WHEN a booking is cancelled, THE System SHALL record the cancellation reason and timestamp in audit logs
+
+### Requirement 15: Booking Slip Generation
+
+**User Story:** As a user, I want to download a booking slip after approval, so that I have documentation for vehicle usage.
+
+#### Acceptance Criteria
+
+1. WHEN a booking is approved, THE System SHALL enable the download booking slip option
+2. WHEN a user downloads a booking slip, THE System SHALL generate a PDF document
+3. WHEN generating a booking slip, THE System SHALL include booking ID, vehicle details, driver details, pickup/drop locations, dates, and approval information
+4. WHEN a booking slip is downloaded, THE System SHALL include a QR code containing the booking ID
+5. WHEN a booking status is not "Approved", THE System SHALL disable the download booking slip option
+
+### Requirement 16: Advance Booking
+
+**User Story:** As a user, I want to book vehicles in advance, so that I can plan official travel ahead of time.
+
+#### Acceptance Criteria
+
+1. WHEN a user creates a booking, THE System SHALL allow booking dates up to 90 days in the future
+2. WHEN a user selects a future date, THE System SHALL show vehicle availability based on existing bookings for that date
+3. WHEN an advance booking is approved, THE System SHALL reserve the vehicle for the specified future date
+4. WHEN the booking date arrives, THE System SHALL send a reminder notification to the user and assigned driver
+5. WHEN viewing advance bookings, THE System SHALL display all future bookings in chronological order
+
+### Requirement 17: Automatic Time Estimation
+
+**User Story:** As a user, I want the system to estimate trip duration, so that I can plan my schedule accordingly.
+
+#### Acceptance Criteria
+
+1. WHEN a user enters pickup and drop locations, THE System SHALL calculate estimated distance
+2. WHEN estimated distance is calculated, THE System SHALL compute estimated trip duration based on average speed
+3. WHEN displaying booking details, THE System SHALL show estimated return time based on outward time and trip duration
+4. WHEN actual trip data is available, THE System SHALL use historical data to improve future time estimates
+5. WHEN a user modifies locations, THE System SHALL recalculate estimated time automatically

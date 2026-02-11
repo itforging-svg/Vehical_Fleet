@@ -9,6 +9,8 @@
  */
 
 import type * as drivers from "../drivers.js";
+import type * as notifications from "../notifications.js";
+import type * as seed from "../seed.js";
 import type * as trips from "../trips.js";
 import type * as vehicles from "../vehicles.js";
 
@@ -20,6 +22,8 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   drivers: typeof drivers;
+  notifications: typeof notifications;
+  seed: typeof seed;
   trips: typeof trips;
   vehicles: typeof vehicles;
 }>;

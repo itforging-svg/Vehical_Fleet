@@ -1,5 +1,7 @@
-import { ReactNode, useState, useEffect } from "react";
-import { LayoutDashboard, Truck, Users, Map, Settings, LogOut, ChevronLeft, ChevronRight } from "lucide-react";
+import { type ReactNode, useState, useEffect } from "react";
+import { LayoutDashboard, Truck, Users, Map, Settings, LogOut, ChevronLeft, ChevronRight, Bell } from "lucide-react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -15,18 +17,23 @@ interface LayoutProps {
 
 const navItems = [
     { id: "dashboard", label: "Overview", icon: LayoutDashboard },
-    { id: "vehicles", label: "Fleet Mgmt", icon: Truck },
+    { id: "vehicles", label: "Fleet Management", icon: Truck },
     { id: "drivers", label: "Drivers", icon: Users },
-    { id: "trips", label: "Trip Logs", icon: Map },
+    { id: "trips", label: "Operational Logs", icon: Map },
+    { id: "notifications", label: "Notifications", icon: Bell },
     { id: "settings", label: "Settings", icon: Settings },
 ];
 
 export function Layout({ children, currentPage, onPageChange }: LayoutProps) {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
+    const unreadCount = useQuery(api.notifications.getUnreadCount, {}) || 0;
+    const syncExpiries = useMutation(api.notifications.syncExpiries);
 
     useEffect(() => {
         setIsVisible(true);
+        // Sync expiries on load
+        syncExpiries();
     }, []);
 
     return (
@@ -65,6 +72,14 @@ export function Layout({ children, currentPage, onPageChange }: LayoutProps) {
                                 currentPage === item.id ? "scale-110" : "group-hover:scale-110"
                             )} />
                             {!isCollapsed && <span className="font-bold text-sm tracking-wide">{item.label}</span>}
+                            {item.id === "notifications" && unreadCount > 0 && (
+                                <span className={cn(
+                                    "absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-black text-white shadow-lg animate-pulse",
+                                    !isCollapsed && "relative top-0 right-0 ml-auto"
+                                )}>
+                                    {unreadCount}
+                                </span>
+                            )}
                             {isCollapsed && (
                                 <div className="absolute left-full ml-4 px-3 py-1 bg-slate-900 text-white text-xs font-bold rounded opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
                                     {item.label}
@@ -75,7 +90,10 @@ export function Layout({ children, currentPage, onPageChange }: LayoutProps) {
                 </nav>
 
                 <div className="p-3 border-t border-white/10">
-                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-blue-100/50 hover:text-red-400 hover:bg-red-400/10 transition-all duration-300 group">
+                    <button
+                        onClick={() => onPageChange("logout")}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-blue-100/50 hover:text-red-400 hover:bg-red-400/10 transition-all duration-300 group"
+                    >
                         <LogOut size={20} />
                         {!isCollapsed && <span className="font-bold text-sm">Logout</span>}
                     </button>
@@ -112,12 +130,12 @@ export function Layout({ children, currentPage, onPageChange }: LayoutProps) {
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="flex flex-col items-end text-right hidden sm:flex">
-                            <span className="text-sm font-bold text-[#0e2a63]">Plant Admin</span>
-                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Main Gate Terminal</span>
+                            <span className="text-sm font-bold text-[#0e2a63]">Superadmin</span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Main Gate Terminal Master Controller</span>
                         </div>
                         <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-[#0e2a63] to-blue-500 shadow-lg p-0.5">
                             <div className="h-full w-full bg-white rounded-[10px] flex items-center justify-center text-[#0e2a63] font-black text-xs">
-                                PA
+                                SA
                             </div>
                         </div>
                     </div>
