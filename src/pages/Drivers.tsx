@@ -4,7 +4,7 @@ import { api } from "../../convex/_generated/api";
 import { Plus, Search, Filter, X, Save, Trash2, Edit2, ShieldCheck, FileText, ClipboardList, UserCheck, Droplets } from "lucide-react";
 
 export default function Drivers() {
-    const drivers = useQuery(api.drivers.list) || [];
+    const drivers = useQuery(api.drivers.list, {}) || [];
     const createDriver = useMutation(api.drivers.create);
     const updateDriver = useMutation(api.drivers.update);
     const removeDriver = useMutation(api.drivers.remove);
@@ -87,6 +87,12 @@ export default function Drivers() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (formData.phoneNumber.length !== 10) {
+            alert("Please enter a valid 10-digit mobile number.");
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             if (editingId) {
@@ -296,7 +302,17 @@ export default function Drivers() {
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Mobile Number</label>
-                                            <input required className="input-field py-3.5" value={formData.phoneNumber} onChange={e => setFormData({ ...formData, phoneNumber: e.target.value })} />
+                                            <input
+                                                required
+                                                className="input-field py-3.5"
+                                                placeholder="10-Digit Mobile #"
+                                                value={formData.phoneNumber}
+                                                onChange={e => {
+                                                    const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                                    setFormData({ ...formData, phoneNumber: val });
+                                                }}
+                                                pattern="[0-9]{10}"
+                                            />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Date of Birth</label>

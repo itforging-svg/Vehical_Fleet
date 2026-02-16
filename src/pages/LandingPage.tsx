@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { Shield, Truck, Users, ArrowRight, LayoutDashboard } from "lucide-react";
 
-interface LandingPageProps {
-    onSelectOption: (option: string) => void;
-}
+import { useNavigate } from "react-router-dom";
 
-export default function LandingPage({ onSelectOption }: LandingPageProps) {
+export default function LandingPage() {
+    const navigate = useNavigate();
     const [selectedPortal, setSelectedPortal] = useState<string>("request_vehicle");
     const [isVisible, setIsVisible] = useState(false);
 
@@ -14,7 +13,8 @@ export default function LandingPage({ onSelectOption }: LandingPageProps) {
     }, []);
 
     const handleProceed = () => {
-        onSelectOption(selectedPortal);
+        const path = selectedPortal === "request_vehicle" ? "/request-vehicle" : "/internal-movement";
+        navigate(path);
     };
 
     return (
@@ -66,7 +66,7 @@ export default function LandingPage({ onSelectOption }: LandingPageProps) {
                 </div>
 
                 <button
-                    onClick={() => onSelectOption("dashboard")}
+                    onClick={() => navigate("/login")}
                     className="group flex items-center gap-2 text-white/80 hover:text-white hover:bg-white/10 transition-all text-xs font-bold px-5 py-2.5 rounded-full border border-white/20 hover:border-white/40"
                 >
                     <LayoutDashboard size={16} className="text-white/70 group-hover:text-white transition-colors" />

@@ -4,13 +4,12 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import PageWrapper from "../components/PageWrapper";
 
-interface InternalMovementProps {
-    onBack: () => void;
-}
+import { useNavigate } from "react-router-dom";
 
-export default function InternalMovement({ onBack }: InternalMovementProps) {
-    const vehiclesQueryResult = useQuery(api.vehicles.list);
-    const driversQueryResult = useQuery(api.drivers.list);
+export default function InternalMovement() {
+    const navigate = useNavigate();
+    const vehiclesQueryResult = useQuery(api.vehicles.list, {});
+    const driversQueryResult = useQuery(api.drivers.list, {});
 
     const vehicles = vehiclesQueryResult || [];
     const drivers = driversQueryResult || [];
@@ -27,13 +26,19 @@ export default function InternalMovement({ onBack }: InternalMovementProps) {
         driverId: "",
         startLocation: "",
         endLocation: "",
+        startOdometer: "",
         purpose: "Internal Transfer",
         notes: ""
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsSubmitting(true);
+        if (!formData.startOdometer) {
+            alert("Please enter current odometer reading.");
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
             const tripId = await createRequest({
                 requesterName: "Internal System",
@@ -42,6 +47,7 @@ export default function InternalMovement({ onBack }: InternalMovementProps) {
                 startLocation: formData.startLocation,
                 endLocation: formData.endLocation,
                 startTime: Date.now(),
+                startOdometer: Number(formData.startOdometer),
                 status: "In Progress",
                 notes: formData.notes
             });
@@ -54,7 +60,7 @@ export default function InternalMovement({ onBack }: InternalMovementProps) {
             });
 
             setSuccess(true);
-            setTimeout(() => onBack(), 2000);
+            setTimeout(() => navigate("/"), 2000);
         } catch (err) {
             alert("Failed to log movement.");
         } finally {
@@ -82,7 +88,7 @@ export default function InternalMovement({ onBack }: InternalMovementProps) {
         <PageWrapper showAdminButton={false}>
             <div className="max-w-3xl w-full space-y-8 py-8 h-full flex flex-col">
                 <button
-                    onClick={onBack}
+                    onClick={() => navigate("/")}
                     className="flex items-center gap-2 text-slate-500 hover:text-[#0e2a63] transition-all font-bold uppercase tracking-wider text-xs"
                 >
                     <ArrowLeft size={16} />
@@ -141,22 +147,41 @@ export default function InternalMovement({ onBack }: InternalMovementProps) {
                         </div>
                         <div className="space-y-3">
                             <label className="text-[11px] font-black uppercase tracking-[0.2em] text-[#0e2a63]/70">From</label>
-                            <input
+                            <select
                                 required
                                 className="input-field py-3.5"
-                                placeholder="Starting Location"
                                 value={formData.startLocation}
                                 onChange={e => setFormData({ ...formData, startLocation: e.target.value })}
-                            />
+                            >
+                                <option value="">Select Origin</option>
+                                {["Seamsless", "Forging", "Main Plant (SMS)", "Bright Bar", "Flat Bar", "Wire Plant", "Main Plant 2 ( SMS 2 )", "40\"Inch Mill", "Pickup / Drop of Contractor"].map(p => (
+                                    <option key={p} value={p}>{p}</option>
+                                ))}
+                            </select>
                         </div>
                         <div className="space-y-3">
                             <label className="text-[11px] font-black uppercase tracking-[0.2em] text-[#0e2a63]/70">To</label>
-                            <input
+                            <select
                                 required
                                 className="input-field py-3.5"
-                                placeholder="Destination Location"
                                 value={formData.endLocation}
                                 onChange={e => setFormData({ ...formData, endLocation: e.target.value })}
+                            >
+                                <option value="">Select Destination</option>
+                                {["Seamsless", "Forging", "Main Plant (SMS)", "Bright Bar", "Flat Bar", "Wire Plant", "Main Plant 2 ( SMS 2 )", "40\"Inch Mill", "Pickup / Drop of Contractor"].map(p => (
+                                    <option key={p} value={p}>{p}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="space-y-3">
+                            <label className="text-[11px] font-black uppercase tracking-[0.2em] text-[#0e2a63]/70">Current Odometer</label>
+                            <input
+                                required
+                                type="number"
+                                className="input-field py-3.5"
+                                placeholder="Enter ODO reading"
+                                value={formData.startOdometer}
+                                onChange={e => setFormData({ ...formData, startOdometer: e.target.value })}
                             />
                         </div>
                         <div className="md:col-span-2 space-y-3">

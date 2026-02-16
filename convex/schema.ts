@@ -34,7 +34,7 @@ export default defineSchema({
     vendorName: v.optional(v.string()),
 
     // System Metadata
-    status: v.string(), // Active / In maintenance / Decommissioned
+    status: v.string(), // Active / In maintenance / Decommissioned / On Duty
     addedBy: v.optional(v.string()),
     remarks: v.optional(v.string()),
   }).index("by_registrationNumber", ["registrationNumber"]),
@@ -67,7 +67,10 @@ export default defineSchema({
     endLocation: v.string(),
     startTime: v.number(), // timestamp
     endTime: v.optional(v.number()), // timestamp
+    startOdometer: v.optional(v.number()),
+    endOdometer: v.optional(v.number()),
     status: v.string(), // e.g. "Pending", "In Progress", "Completed", "Cancelled"
+    requestId: v.optional(v.string()), // Linked from vehicleRequests
     notes: v.optional(v.string()),
   }).index("by_vehicleId", ["vehicleId"]),
 
@@ -82,4 +85,66 @@ export default defineSchema({
   })
     .index("by_status", ["status"])
     .index("by_vehicle_type", ["vehicleId", "type"]),
+
+  vehicleRequests: defineTable({
+    requestId: v.string(),
+    requesterName: v.string(),
+    employeeId: v.string(),
+    department: v.string(),
+    plant: v.string(),
+    contactNumber: v.string(),
+    purpose: v.string(),
+    priority: v.string(),
+    pickupLocation: v.string(),
+    dropLocation: v.string(),
+    tripType: v.string(),
+    vehicleType: v.string(),
+    bookingDateTime: v.optional(v.string()), // For advance booking (IST format)
+    status: v.string(), // "pending", "approved", "rejected", "completed"
+    vehicleId: v.optional(v.id("vehicles")),
+    driverId: v.optional(v.id("drivers")),
+    createdAt: v.number(),
+  })
+    .index("by_requestId", ["requestId"])
+    .index("by_status", ["status"]),
+
+  admins: defineTable({
+    adminId: v.string(),
+    password: v.string(),
+    plant: v.optional(v.string()), // Null for Superadmin
+    name: v.string(),
+  }).index("by_adminId", ["adminId"]),
+
+  fuelRecords: defineTable({
+    vehicleId: v.id("vehicles"),
+    registrationNumber: v.string(), // Denormalized for easy reference
+    driverId: v.optional(v.id("drivers")),
+    driverName: v.optional(v.string()),
+
+    // Fuel Transaction Details
+    fuelType: v.string(), // Petrol, Diesel, CNG
+    quantity: v.number(), // in liters
+    pricePerLiter: v.number(),
+    totalCost: v.number(),
+
+    // Odometer & Efficiency
+    currentOdometer: v.number(),
+    lastOdometer: v.optional(v.number()),
+    distanceCovered: v.optional(v.number()), // km since last refuel
+    fuelEfficiency: v.optional(v.number()), // km/liter (calculated)
+
+    // Location & Vendor
+    location: v.optional(v.string()), // Where fuel was purchased
+    vendorName: v.optional(v.string()), // Fuel station name
+    billNumber: v.optional(v.string()),
+    plant: v.string(), // Plant assignment
+
+    // System Metadata
+    refuelDate: v.number(), // timestamp
+    addedBy: v.string(), // Admin who added the record
+    remarks: v.optional(v.string()),
+  })
+    .index("by_vehicleId", ["vehicleId"])
+    .index("by_plant", ["plant"])
+    .index("by_date", ["refuelDate"]),
 });

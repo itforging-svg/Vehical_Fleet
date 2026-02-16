@@ -2,9 +2,13 @@ import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
 export const list = query({
-    args: {},
-    handler: async (ctx) => {
-        return await ctx.db.query("vehicles").collect();
+    args: { plant: v.optional(v.string()) },
+    handler: async (ctx, args) => {
+        const vehicles = await ctx.db.query("vehicles").collect();
+        if (args.plant) {
+            return vehicles.filter(v => v.locationPlant === args.plant);
+        }
+        return vehicles;
     },
 });
 

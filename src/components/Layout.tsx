@@ -1,40 +1,51 @@
-import { type ReactNode, useState, useEffect } from "react";
-import { LayoutDashboard, Truck, Users, Map, Settings, LogOut, ChevronLeft, ChevronRight, Bell } from "lucide-react";
+import { useState, useEffect } from "react";
+import { LayoutDashboard, Truck, Users, Map, Settings, LogOut, ChevronLeft, ChevronRight, Bell, ClipboardList, Fuel } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
 interface LayoutProps {
-    children: ReactNode;
-    currentPage: string;
-    onPageChange: (page: string) => void;
+    user?: any;
+    onLogout: () => void;
 }
 
 const navItems = [
-    { id: "dashboard", label: "Overview", icon: LayoutDashboard },
-    { id: "vehicles", label: "Fleet Management", icon: Truck },
-    { id: "drivers", label: "Drivers", icon: Users },
-    { id: "trips", label: "Operational Logs", icon: Map },
-    { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "settings", label: "Settings", icon: Settings },
+    { id: "dashboard", label: "Overview", icon: LayoutDashboard, path: "/dashboard" },
+    { id: "requests", label: "Vehicle Requests", icon: ClipboardList, path: "/requests" },
+    { id: "vehicles", label: "Fleet Management", icon: Truck, path: "/vehicles" },
+    { id: "drivers", label: "Drivers", icon: Users, path: "/drivers" },
+    { id: "trips", label: "Operational Logs", icon: Map, path: "/trips" },
+    { id: "fuel", label: "Fuel Management", icon: Fuel, path: "/fuel" },
+    { id: "notifications", label: "Notifications", icon: Bell, path: "/notifications" },
 ];
 
-export function Layout({ children, currentPage, onPageChange }: LayoutProps) {
+export function Layout({ user, onLogout }: LayoutProps) {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
     const unreadCount = useQuery(api.notifications.getUnreadCount, {}) || 0;
     const syncExpiries = useMutation(api.notifications.syncExpiries);
+    const navigate = useNavigate();
+    const location = useLocation();
 
     useEffect(() => {
         setIsVisible(true);
         // Sync expiries on load
         syncExpiries();
     }, []);
+
+    // Filter nav items based on user role/id
+    const filteredNavItems = navItems.filter(item => {
+        if (item.id === "notifications") return user?.adminId === "cslsuperadmin";
+        return true;
+    });
+
+    const currentPage = navItems.find(item => item.path === location.pathname)?.id || "dashboard";
 
     return (
         <div className="flex h-screen w-full bg-slate-50 text-slate-800 font-sans overflow-hidden">
@@ -56,10 +67,10 @@ export function Layout({ children, currentPage, onPageChange }: LayoutProps) {
                 </div>
 
                 <nav className="flex-1 px-3 py-6 space-y-1.5 overflow-y-auto">
-                    {navItems.map((item) => (
+                    {filteredNavItems.map((item) => (
                         <button
                             key={item.id}
-                            onClick={() => onPageChange(item.id)}
+                            onClick={() => navigate(item.path)}
                             className={cn(
                                 "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative",
                                 currentPage === item.id
@@ -91,7 +102,7 @@ export function Layout({ children, currentPage, onPageChange }: LayoutProps) {
 
                 <div className="p-3 border-t border-white/10">
                     <button
-                        onClick={() => onPageChange("logout")}
+                        onClick={onLogout}
                         className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-blue-100/50 hover:text-red-400 hover:bg-red-400/10 transition-all duration-300 group"
                     >
                         <LogOut size={20} />
@@ -130,12 +141,12 @@ export function Layout({ children, currentPage, onPageChange }: LayoutProps) {
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="flex flex-col items-end text-right hidden sm:flex">
-                            <span className="text-sm font-bold text-[#0e2a63]">Superadmin</span>
-                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Main Gate Terminal Master Controller</span>
+                            <span className="text-sm font-bold text-[#0e2a63]">{user?.name || "Admin"}</span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{user?.plant || "Main Gate Terminal Master Controller"}</span>
                         </div>
                         <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-[#0e2a63] to-blue-500 shadow-lg p-0.5">
                             <div className="h-full w-full bg-white rounded-[10px] flex items-center justify-center text-[#0e2a63] font-black text-xs">
-                                SA
+                                {user?.name ? user.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() : "SA"}
                             </div>
                         </div>
                     </div>
@@ -145,7 +156,7 @@ export function Layout({ children, currentPage, onPageChange }: LayoutProps) {
                     "flex-1 p-8 relative z-1 transition-all duration-700 transform",
                     isVisible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
                 )}>
-                    {children}
+                    <Outlet />
                 </div>
             </main>
         </div>

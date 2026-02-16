@@ -3,8 +3,8 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Plus, Search, Filter, Truck, X, Save, Trash2, Edit2, ShieldCheck, FileText, Landmark, ClipboardList } from "lucide-react";
 
-export default function Vehicles() {
-    const vehicles = useQuery(api.vehicles.list) || [];
+export default function Vehicles({ plant }: { plant?: string }) {
+    const vehicles = useQuery(api.vehicles.list, { plant }) || [];
     const createVehicle = useMutation(api.vehicles.create);
     const updateVehicle = useMutation(api.vehicles.update);
     const removeVehicle = useMutation(api.vehicles.remove);
@@ -402,7 +402,9 @@ export default function Vehicles() {
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Plant</label>
-                                            <input className="input-field py-3.5" value={formData.locationPlant} onChange={e => setFormData({ ...formData, locationPlant: e.target.value })} />
+                                            <select className="input-field py-3.5" value={formData.locationPlant} onChange={e => setFormData({ ...formData, locationPlant: e.target.value })}>
+                                                {["Seamsless", "Forging", "Main Plant (SMS)", "Bright Bar", "Flat Bar", "Wire Plant", "Main Plant 2 ( SMS 2 )", "40\"Inch Mill"].map(p => <option key={p} value={p}>{p}</option>)}
+                                            </select>
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Dept</label>
