@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Plus, Search, FileText, Calendar, DollarSign, PenTool, X, Edit2, Trash2 } from "lucide-react";
+import { Plus, Search, FileText, Calendar, DollarSign, PenTool, X, Edit2, Trash2, Info } from "lucide-react";
 import type { Id } from "../../convex/_generated/dataModel";
+import { useLastOdometer } from "../hooks/useLastOdometer";
 
 interface MaintenanceProps {
     plant?: string;
@@ -82,6 +83,12 @@ export default function Maintenance({ plant }: MaintenanceProps) {
             alert("Failed to delete record.");
         }
     };
+
+    // Auto-fill odometer when a vehicle is selected and we are NOT editing
+    const lastOdometer = useLastOdometer(formData.vehicleId);
+    if (!editingRecord && lastOdometer && formData.odometer === "") {
+        setFormData(prev => ({ ...prev, odometer: lastOdometer.toString() }));
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -391,16 +398,28 @@ export default function Maintenance({ plant }: MaintenanceProps) {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Odometer Reading *</label>
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Odometer Reading *</label>
+                                            {!editingRecord && lastOdometer && formData.vehicleId && (
+                                                <span className="text-[10px] font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded flex items-center gap-1 shrink-0">
+                                                    <Info size={10} /> Auto-filled
+                                                </span>
+                                            )}
+                                        </div>
                                         <input
                                             type="number"
                                             required
-                                            min="0"
+                                            min={!editingRecord && lastOdometer ? lastOdometer : 0}
                                             value={formData.odometer}
                                             onChange={(e) => setFormData({ ...formData, odometer: e.target.value })}
-                                            className="input-field"
+                                            className="input-field font-medium"
                                             placeholder="e.g. 45000"
                                         />
+                                        {!editingRecord && lastOdometer && formData.vehicleId && (
+                                            <p className="text-[10px] font-medium text-slate-400">
+                                                Must be ≥ {lastOdometer.toLocaleString()} km
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="space-y-2">

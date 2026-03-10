@@ -30,7 +30,13 @@ export const getLastOdometer = query({
             .collect();
         const lastFuelOdo = fuelRecords.reduce((max, r) => Math.max(max, r.currentOdometer), 0);
 
-        const lastOdo = Math.max(lastTripOdo, lastFuelOdo);
+        // Max odometer from maintenance records
+        const maintenanceRecords = await ctx.db.query("maintenanceRecords")
+            .withIndex("by_vehicleId", q => q.eq("vehicleId", args.vehicleId))
+            .collect();
+        const lastMaintenanceOdo = maintenanceRecords.reduce((max, r) => Math.max(max, r.odometer), 0);
+
+        const lastOdo = Math.max(lastTripOdo, lastFuelOdo, lastMaintenanceOdo);
         return lastOdo > 0 ? lastOdo : null;
     },
 });
