@@ -64,6 +64,7 @@ export default defineSchema({
 
     // System Metadata
     addedBy: v.optional(v.string()),
+    addedDate: v.optional(v.string()),
     deletedAt: v.optional(v.number()),
 
     // Documents (Storage IDs)
