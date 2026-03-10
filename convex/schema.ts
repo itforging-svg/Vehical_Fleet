@@ -151,5 +151,27 @@ export default defineSchema({
   })
     .index("by_vehicleId", ["vehicleId"])
     .index("by_plant", ["plant"])
-    .index("by_date", ["refuelDate"]),
+    .index("by_refuelDate", ["refuelDate"]),
+
+  maintenanceRecords: defineTable({
+    vehicleId: v.id("vehicles"),
+    registrationNumber: v.string(),
+    plant: v.string(), // Denormalized for access control
+    type: v.string(), // "Scheduled" | "Unscheduled"
+    status: v.string(), // "Scheduled" | "In Progress" | "Completed" | "Cancelled"
+    serviceDate: v.number(), // timestamp
+    completionDate: v.optional(v.number()), // timestamp
+    odometer: v.number(),
+    description: v.string(),
+    vendorName: v.optional(v.string()),
+    billNumber: v.optional(v.string()),
+    cost: v.number(),
+
+    // System Metadata
+    addedBy: v.string(), // Admin adminId
+    deletedAt: v.optional(v.number()), // soft-delete timestamp
+  })
+    .index("by_vehicleId", ["vehicleId"])
+    .index("by_plant", ["plant"])
+    .index("by_serviceDate", ["serviceDate"]),
 });

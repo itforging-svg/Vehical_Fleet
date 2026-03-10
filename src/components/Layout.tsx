@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { LayoutDashboard, Truck, Users, Map, LogOut, ChevronLeft, ChevronRight, Bell, ClipboardList, Fuel, Navigation, Wifi, Clock } from "lucide-react";
+import { LayoutDashboard, Truck, Users, Map, LogOut, ChevronLeft, ChevronRight, Bell, ClipboardList, Fuel, Navigation, Wifi, Clock, PenTool } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import { useSessionTimeout } from "../hooks/useSessionTimeout";
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -24,6 +23,7 @@ const navItems = [
     { id: "trips", label: "Operational Logs", icon: Map, path: "/trips" },
     { id: "internalMovements", label: "Internal Movements", icon: Navigation, path: "/internal-logs" },
     { id: "fuel", label: "Fuel Management", icon: Fuel, path: "/fuel" },
+    { id: "maintenance", label: "Maintenance", icon: PenTool, path: "/maintenance" },
     { id: "notifications", label: "Notifications", icon: Bell, path: "/notifications" },
 ];
 
@@ -104,8 +104,6 @@ export function Layout({ user, onLogout }: LayoutProps) {
             prevRequestCount.current = requests.length;
             return;
         }
-        const pending = requests.filter((r: any) => r.status === "pending").length;
-        const prevPending = prevRequestCount.current;
         if (requests.length > prevRequestCount.current) {
             const newCount = requests.length - prevRequestCount.current;
             showToast(`🔔 ${newCount} new vehicle request${newCount > 1 ? "s" : ""}!`);
@@ -126,7 +124,7 @@ export function Layout({ user, onLogout }: LayoutProps) {
 
     // Filter nav items based on user role
     const filteredNavItems = navItems.filter(item => {
-        if (item.id === "notifications") {
+        if (item.id === "notifications" || item.id === "maintenance") {
             return user?.adminId === "cslsuperadmin" || user?.adminId === "masteradmin";
         }
         return true;
