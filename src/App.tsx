@@ -15,6 +15,7 @@ import Settings from "./pages/Settings";
 import FuelManagement from "./pages/FuelManagement";
 import InternalMovementLogs from "./pages/InternalMovementLogs";
 import Maintenance from "./pages/Maintenance";
+import Reports from "./pages/Reports";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -52,6 +53,7 @@ function App() {
               <Route path="/internal-logs" element={<InternalMovementLogs plant={user?.plant} />} />
               <Route path="/fuel" element={<FuelManagement plant={user?.plant} />} />
               <Route path="/maintenance" element={<Maintenance plant={user?.plant} />} />
+              <Route path="/reports" element={<Reports plant={user?.plant} />} />
               <Route path="/notifications" element={<NotificationPage />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
