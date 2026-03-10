@@ -12,6 +12,7 @@ import NotificationPage from "./pages/Notifications";
 import Requests from "./pages/Requests";
 import LoginPage from "./pages/LoginPage";
 import Settings from "./pages/Settings";
+import DriverPerformance from "./pages/DriverPerformance";
 import FuelManagement from "./pages/FuelManagement";
 import InternalMovementLogs from "./pages/InternalMovementLogs";
 import Maintenance from "./pages/Maintenance";
@@ -48,7 +49,8 @@ function App() {
               <Route path="/dashboard" element={<Dashboard plant={user?.plant} />} />
               <Route path="/requests" element={<Requests plant={user?.plant} />} />
               <Route path="/vehicles" element={<Vehicles plant={user?.plant} />} />
-              <Route path="/drivers" element={<Drivers />} />
+              <Route path="/drivers" element={<Drivers plant={user?.plant} />} />
+              <Route path="/driver-performance" element={<DriverPerformance plant={user?.plant} />} />
               <Route path="/trips" element={<Trips plant={user?.plant} />} />
               <Route path="/internal-logs" element={<InternalMovementLogs plant={user?.plant} />} />
               <Route path="/fuel" element={<FuelManagement plant={user?.plant} />} />

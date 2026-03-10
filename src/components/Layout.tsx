@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef } from "react";
-import { LayoutDashboard, Truck, Users, Map, LogOut, ChevronLeft, ChevronRight, Bell, ClipboardList, Fuel, Navigation, Wifi, Clock, PenTool, FileBarChart } from "lucide-react";
+import { Menu, X, Bell, Home, Truck, Users, Activity, Settings, LogOut, Search, Map, CheckCircle2, Navigation, KeyRound, User, Fuel, PenTool, ExternalLink, FileBarChart, ClipboardList, LayoutDashboard, ChevronLeft, ChevronRight, Clock, Wifi } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { clsx, type ClassValue } from "clsx";
@@ -20,6 +19,7 @@ const navItems = [
     { id: "requests", label: "Vehicle Requests", icon: ClipboardList, path: "/requests" },
     { id: "vehicles", label: "Fleet Management", icon: Truck, path: "/vehicles" },
     { id: "drivers", label: "Drivers", icon: Users, path: "/drivers" },
+    { id: "driver-performance", label: "Driver Performance", icon: Activity, path: "/driver-performance" },
     { id: "trips", label: "Operational Logs", icon: Map, path: "/trips" },
     { id: "internalMovements", label: "Internal Movements", icon: Navigation, path: "/internal-logs" },
     { id: "fuel", label: "Fuel Management", icon: Fuel, path: "/fuel" },
