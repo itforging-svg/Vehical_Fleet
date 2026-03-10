@@ -2,6 +2,33 @@ import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Plus, Search, Filter, X, Save, Trash2, Edit2, ShieldCheck, FileText, ClipboardList, UserCheck, Droplets } from "lucide-react";
+import type { Id } from "../../convex/_generated/dataModel";
+import FileUpload from "../components/FileUpload";
+
+interface Driver {
+    _id: Id<"drivers">;
+    _creationTime: number;
+    driverId: string;
+    name: string;
+    phoneNumber: string;
+    dob: string;
+    bloodGroup: string;
+    photo: string;
+    licenseNumber: string;
+    licenseType: string[];
+    licenseIssueDate: string;
+    licenseValidity: string;
+    licenseIssuedBy: string;
+    status: string;
+    addedBy: string;
+    addedDate: string;
+    address?: string;
+    plant?: string;
+    photoId?: Id<"_storage">;
+    licenseFrontId?: Id<"_storage">;
+    licenseBackId?: Id<"_storage">;
+    aadharId?: Id<"_storage">;
+}
 
 export default function Drivers() {
     const drivers = useQuery(api.drivers.list, {}) || [];
@@ -15,7 +42,7 @@ export default function Drivers() {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [activeSection, setActiveSection] = useState("identification");
 
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<Omit<Driver, "_id" | "_creationTime">>({
         driverId: "",
         name: "",
         phoneNumber: "",
@@ -29,7 +56,11 @@ export default function Drivers() {
         licenseIssuedBy: "",
         status: "Available",
         addedBy: "cslsuperadmin",
-        addedDate: new Date().toISOString().split('T')[0]
+        addedDate: new Date().toISOString().split('T')[0],
+        photoId: undefined,
+        licenseFrontId: undefined,
+        licenseBackId: undefined,
+        aadharId: undefined,
     });
 
     const filteredDrivers = drivers.filter(d =>
@@ -60,7 +91,11 @@ export default function Drivers() {
                 licenseIssuedBy: driver.licenseIssuedBy || "",
                 status: driver.status || "Available",
                 addedBy: driver.addedBy || "cslsuperadmin",
-                addedDate: driver.addedDate || new Date().toISOString().split('T')[0]
+                addedDate: driver.addedDate || new Date().toISOString().split('T')[0],
+                photoId: driver.photoId,
+                licenseFrontId: driver.licenseFrontId,
+                licenseBackId: driver.licenseBackId,
+                aadharId: driver.aadharId,
             });
         } else {
             setEditingId(null);
@@ -78,7 +113,11 @@ export default function Drivers() {
                 licenseIssuedBy: "",
                 status: "Available",
                 addedBy: "cslsuperadmin",
-                addedDate: new Date().toISOString().split('T')[0]
+                addedDate: new Date().toISOString().split('T')[0],
+                photoId: undefined,
+                licenseFrontId: undefined,
+                licenseBackId: undefined,
+                aadharId: undefined,
             });
         }
         setActiveSection("identification");
@@ -284,6 +323,7 @@ export default function Drivers() {
                                 {[
                                     { id: "identification", label: "Identification", icon: ShieldCheck },
                                     { id: "licensing", label: "Licensing", icon: FileText },
+                                    { id: "documents", label: "Documents", icon: ClipboardList },
                                     { id: "system", label: "System", icon: ClipboardList }
                                 ].map(tab => (
                                     <button
@@ -374,6 +414,38 @@ export default function Drivers() {
                                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Validity Date</label>
                                             <input className="input-field py-3.5" type="date" value={formData.licenseValidity} onChange={e => setFormData({ ...formData, licenseValidity: e.target.value })} />
                                         </div>
+                                    </div>
+                                )}
+
+                                {activeSection === "documents" && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                                        <FileUpload
+                                            label="Driver Photo"
+                                            storageId={formData.photoId}
+                                            onUploadComplete={(id) => setFormData({ ...formData, photoId: id })}
+                                            onRemove={() => setFormData({ ...formData, photoId: undefined })}
+                                        />
+                                        <FileUpload
+                                            label="Aadhar Card"
+                                            acceptedTypes="image/*,.pdf"
+                                            storageId={formData.aadharId}
+                                            onUploadComplete={(id) => setFormData({ ...formData, aadharId: id })}
+                                            onRemove={() => setFormData({ ...formData, aadharId: undefined })}
+                                        />
+                                        <FileUpload
+                                            label="License (Front)"
+                                            acceptedTypes="image/*,.pdf"
+                                            storageId={formData.licenseFrontId}
+                                            onUploadComplete={(id) => setFormData({ ...formData, licenseFrontId: id })}
+                                            onRemove={() => setFormData({ ...formData, licenseFrontId: undefined })}
+                                        />
+                                        <FileUpload
+                                            label="License (Back)"
+                                            acceptedTypes="image/*,.pdf"
+                                            storageId={formData.licenseBackId}
+                                            onUploadComplete={(id) => setFormData({ ...formData, licenseBackId: id })}
+                                            onRemove={() => setFormData({ ...formData, licenseBackId: undefined })}
+                                        />
                                     </div>
                                 )}
 

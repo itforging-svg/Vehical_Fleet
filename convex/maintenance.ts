@@ -70,6 +70,7 @@ export const create = mutation({
         billNumber: v.optional(v.string()),
         cost: v.number(),
         addedBy: v.string(),
+        invoiceId: v.optional(v.id("_storage")),
     },
     handler: async (ctx, args) => {
         // Auto-update vehicle status
@@ -95,6 +96,7 @@ export const update = mutation({
         vendorName: v.optional(v.string()),
         billNumber: v.optional(v.string()),
         cost: v.number(),
+        invoiceId: v.optional(v.id("_storage")),
     },
     handler: async (ctx, args) => {
         const { id, ...data } = args;

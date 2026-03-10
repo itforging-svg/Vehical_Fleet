@@ -82,6 +82,10 @@ export const create = mutation({
         status: v.string(),
         addedBy: v.optional(v.string()),
         remarks: v.optional(v.string()),
+        photoId: v.optional(v.id("_storage")),
+        rcFileId: v.optional(v.id("_storage")),
+        insuranceId: v.optional(v.id("_storage")),
+        pucId: v.optional(v.id("_storage")),
     },
     handler: async (ctx, args) => {
         const existing = await ctx.db
@@ -124,9 +128,13 @@ export const update = mutation({
         assignedDriver: v.optional(v.string()),
         locationPlant: v.optional(v.string()),
         vendorName: v.optional(v.string()),
-        status: v.string(),
+        status: v.optional(v.string()),
         addedBy: v.optional(v.string()),
         remarks: v.optional(v.string()),
+        photoId: v.optional(v.id("_storage")),
+        rcFileId: v.optional(v.id("_storage")),
+        insuranceId: v.optional(v.id("_storage")),
+        pucId: v.optional(v.id("_storage")),
     },
     handler: async (ctx, args) => {
         const { id, ...data } = args;

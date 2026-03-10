@@ -2,6 +2,44 @@ import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Plus, Search, Filter, Truck, X, Save, Trash2, Edit2, ShieldCheck, FileText, Landmark, ClipboardList } from "lucide-react";
+import type { Id } from "../../convex/_generated/dataModel";
+import FileUpload from "../components/FileUpload";
+
+interface Vehicle {
+    _id: Id<"vehicles">;
+    _creationTime: number;
+    registrationNumber: string;
+    chassisNumber: string;
+    engineNumber: string;
+    type: string;
+    category: string;
+    make: string;
+    model: string;
+    variant: string;
+    manufacturingYear: string;
+    fuelType: string;
+    transmission: string;
+    rcExpiryDate: string;
+    insuranceProvider: string;
+    insurancePolicyNumber: string;
+    insuranceExpiryDate: string;
+    pucExpiryDate: string;
+    fitnessExpiryDate: string;
+    permitType: string;
+    permitExpiryDate: string;
+    ownershipType: string;
+    assignedDepartment: string;
+    assignedDriver: string;
+    locationPlant: string;
+    vendorName: string;
+    status: string;
+    addedBy?: string;
+    remarks?: string;
+    photoId?: Id<"_storage">;
+    rcFileId?: Id<"_storage">;
+    insuranceId?: Id<"_storage">;
+    pucId?: Id<"_storage">;
+}
 
 export default function Vehicles({ plant }: { plant?: string }) {
     const vehicles = useQuery(api.vehicles.list, { plant }) || [];
@@ -16,7 +54,7 @@ export default function Vehicles({ plant }: { plant?: string }) {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [activeSection, setActiveSection] = useState("identification");
 
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<Omit<Vehicle, "_id" | "_creationTime">>({
         registrationNumber: "",
         chassisNumber: "",
         engineNumber: "",
@@ -43,7 +81,11 @@ export default function Vehicles({ plant }: { plant?: string }) {
         vendorName: "",
         status: "Active",
         addedBy: "cslsuperadmin",
-        remarks: ""
+        remarks: "",
+        photoId: undefined,
+        rcFileId: undefined,
+        insuranceId: undefined,
+        pucId: undefined,
     });
 
     const filteredVehicles = vehicles.filter(v =>
@@ -82,7 +124,11 @@ export default function Vehicles({ plant }: { plant?: string }) {
                 vendorName: vehicle.vendorName || "",
                 status: vehicle.status || "Active",
                 addedBy: vehicle.addedBy || "cslsuperadmin",
-                remarks: vehicle.remarks || ""
+                remarks: vehicle.remarks || "",
+                photoId: vehicle.photoId,
+                rcFileId: vehicle.rcFileId,
+                insuranceId: vehicle.insuranceId,
+                pucId: vehicle.pucId,
             });
         } else {
             setEditingId(null);
@@ -95,7 +141,8 @@ export default function Vehicles({ plant }: { plant?: string }) {
                 fitnessExpiryDate: "", permitType: "State", permitExpiryDate: "",
                 ownershipType: "Company-owned", assignedDepartment: "",
                 assignedDriver: "", locationPlant: plant || "", vendorName: "",
-                status: "Active", addedBy: "cslsuperadmin", remarks: ""
+                status: "Active", addedBy: "cslsuperadmin", remarks: "",
+                photoId: undefined, rcFileId: undefined, insuranceId: undefined, pucId: undefined,
             });
         }
         setActiveSection("identification");
@@ -424,6 +471,38 @@ export default function Vehicles({ plant }: { plant?: string }) {
                                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Vendor Name</label>
                                             <input className="input-field py-3.5" value={formData.vendorName} onChange={e => setFormData({ ...formData, vendorName: e.target.value })} />
                                         </div>
+                                    </div>
+                                )}
+
+                                {activeSection === "documents" && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                                        <FileUpload
+                                            label="Vehicle Photo"
+                                            storageId={formData.photoId}
+                                            onUploadComplete={(id) => setFormData({ ...formData, photoId: id })}
+                                            onRemove={() => setFormData({ ...formData, photoId: undefined })}
+                                        />
+                                        <FileUpload
+                                            label="RC Document"
+                                            acceptedTypes="image/*,.pdf"
+                                            storageId={formData.rcFileId}
+                                            onUploadComplete={(id) => setFormData({ ...formData, rcFileId: id })}
+                                            onRemove={() => setFormData({ ...formData, rcFileId: undefined })}
+                                        />
+                                        <FileUpload
+                                            label="Insurance Certificate"
+                                            acceptedTypes="image/*,.pdf"
+                                            storageId={formData.insuranceId}
+                                            onUploadComplete={(id) => setFormData({ ...formData, insuranceId: id })}
+                                            onRemove={() => setFormData({ ...formData, insuranceId: undefined })}
+                                        />
+                                        <FileUpload
+                                            label="PUC Certificate"
+                                            acceptedTypes="image/*,.pdf"
+                                            storageId={formData.pucId}
+                                            onUploadComplete={(id) => setFormData({ ...formData, pucId: id })}
+                                            onRemove={() => setFormData({ ...formData, pucId: undefined })}
+                                        />
                                     </div>
                                 )}
 

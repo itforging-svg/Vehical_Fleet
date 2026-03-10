@@ -75,7 +75,6 @@ export const syncExpiries = mutation({
                 const thresholds = [15, 7, 3, 0];
 
                 for (const threshold of thresholds) {
-                    const isThresholdReached = diffDays <= threshold;
                     const isAppropriateThreshold = threshold === 0 ? diffDays <= 0 : (diffDays > 0 && diffDays <= threshold);
 
                     if (isAppropriateThreshold) {

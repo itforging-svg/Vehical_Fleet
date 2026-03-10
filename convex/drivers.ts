@@ -23,8 +23,14 @@ export const create = mutation({
         licenseValidity: v.optional(v.string()),
         licenseIssuedBy: v.optional(v.string()),
         status: v.string(),
+        address: v.optional(v.string()),
+        plant: v.optional(v.string()),
         addedBy: v.optional(v.string()),
         addedDate: v.optional(v.string()),
+        photoId: v.optional(v.id("_storage")),
+        licenseFrontId: v.optional(v.id("_storage")),
+        licenseBackId: v.optional(v.id("_storage")),
+        aadharId: v.optional(v.id("_storage")),
     },
     handler: async (ctx, args) => {
         const existing = await ctx.db
@@ -55,8 +61,14 @@ export const update = mutation({
         licenseValidity: v.optional(v.string()),
         licenseIssuedBy: v.optional(v.string()),
         status: v.string(),
+        address: v.optional(v.string()),
+        plant: v.optional(v.string()),
         addedBy: v.optional(v.string()),
         addedDate: v.optional(v.string()),
+        photoId: v.optional(v.id("_storage")),
+        licenseFrontId: v.optional(v.id("_storage")),
+        licenseBackId: v.optional(v.id("_storage")),
+        aadharId: v.optional(v.id("_storage")),
     },
     handler: async (ctx, args) => {
         const { id, ...data } = args;

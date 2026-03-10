@@ -37,7 +37,13 @@ export default defineSchema({
     status: v.string(), // Active / In maintenance / Decommissioned / On Duty
     addedBy: v.optional(v.string()),
     remarks: v.optional(v.string()),
-    deletedAt: v.optional(v.number()), // soft-delete timestamp
+    deletedAt: v.optional(v.number()), // soft delete support
+
+    // Documents (Storage IDs)
+    photoId: v.optional(v.id("_storage")),
+    rcFileId: v.optional(v.id("_storage")),
+    insuranceId: v.optional(v.id("_storage")),
+    pucId: v.optional(v.id("_storage")),
   }).index("by_registrationNumber", ["registrationNumber"]),
 
   drivers: defineTable({
@@ -52,10 +58,19 @@ export default defineSchema({
     licenseIssueDate: v.optional(v.string()),
     licenseValidity: v.optional(v.string()),
     licenseIssuedBy: v.optional(v.string()),
-    status: v.string(), // e.g. "Available", "On Duty", "Inactive"
+    address: v.optional(v.string()),
+    plant: v.optional(v.string()),
+    status: v.string(), // "Unassigned", "Assigned", "On Leave"
+
+    // System Metadata
     addedBy: v.optional(v.string()),
-    addedDate: v.optional(v.string()),
-    deletedAt: v.optional(v.number()), // soft-delete timestamp
+    deletedAt: v.optional(v.number()),
+
+    // Documents (Storage IDs)
+    photoId: v.optional(v.id("_storage")),
+    licenseFrontId: v.optional(v.id("_storage")),
+    licenseBackId: v.optional(v.id("_storage")),
+    aadharId: v.optional(v.id("_storage")),
   }).index("by_licenseNumber", ["licenseNumber"])
     .index("by_driverId", ["driverId"]),
 
@@ -170,6 +185,9 @@ export default defineSchema({
     // System Metadata
     addedBy: v.string(), // Admin adminId
     deletedAt: v.optional(v.number()), // soft-delete timestamp
+
+    // Documents
+    invoiceId: v.optional(v.id("_storage")),
   })
     .index("by_vehicleId", ["vehicleId"])
     .index("by_plant", ["plant"])

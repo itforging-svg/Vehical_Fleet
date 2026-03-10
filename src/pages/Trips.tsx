@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Map, Clock, ArrowRight, CheckCircle2, Hash, Search, XCircle, Edit2, Save } from "lucide-react";
+import { Map, Clock, ArrowRight, CheckCircle2, Search, XCircle, Edit2, Save } from "lucide-react";
 import { useState } from "react";
 
 export default function Trips({ plant }: { plant?: string }) {
@@ -17,8 +17,8 @@ export default function Trips({ plant }: { plant?: string }) {
     const combinedLogs = [
         ...trips.map(t => ({ ...t, type: 'trip' })),
         ...requests
-            .filter(r => r.status === "rejected")
-            .map(r => ({
+            .filter((r: any) => r.status === "rejected")
+            .map((r: any) => ({
                 _id: r._id,
                 _creationTime: r.createdAt,
                 requestId: r.requestId,

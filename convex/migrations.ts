@@ -20,18 +20,18 @@ export const migratePlantNames = mutation({
         }
 
         // 3. Update Requests
-        const requests = await ctx.db.query("requests").collect();
+        const requests = await ctx.db.query("requests" as any).collect();
         for (const r of requests) {
-            if (r.plant === "Seamsless") {
-                await ctx.db.patch(r._id, { plant: "Seamless" });
+            if ((r as any).plant === "Seamsless") {
+                await ctx.db.patch(r._id, { plant: "Seamless" } as any);
             }
         }
 
         // 4. Update Internal Movements
-        const movements = await ctx.db.query("internalMovements").collect();
+        const movements = await ctx.db.query("internalMovements" as any).collect();
         for (const m of movements) {
-            if (m.from === "Seamsless") await ctx.db.patch(m._id, { from: "Seamless" });
-            if (m.to === "Seamsless") await ctx.db.patch(m._id, { to: "Seamless" });
+            if ((m as any).from === ("Seamsless" as any)) await ctx.db.patch(m._id, { from: "Seamless" } as any);
+            if ((m as any).to === ("Seamsless" as any)) await ctx.db.patch(m._id, { to: "Seamless" } as any);
         }
 
         return "Migration completed: Updated Seamsless to Seamless in vehicles, admins, requests, and movements.";

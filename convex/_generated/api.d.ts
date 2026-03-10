@@ -10,6 +10,7 @@
 
 import type * as auth from "../auth.js";
 import type * as drivers from "../drivers.js";
+import type * as files from "../files.js";
 import type * as fuelRecords from "../fuelRecords.js";
 import type * as idHelper from "../idHelper.js";
 import type * as maintenance from "../maintenance.js";
@@ -30,6 +31,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   drivers: typeof drivers;
+  files: typeof files;
   fuelRecords: typeof fuelRecords;
   idHelper: typeof idHelper;
   maintenance: typeof maintenance;

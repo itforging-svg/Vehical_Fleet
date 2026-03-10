@@ -4,6 +4,21 @@ import { api } from "../../convex/_generated/api";
 import { Plus, Search, FileText, Calendar, DollarSign, PenTool, X, Edit2, Trash2, Info } from "lucide-react";
 import type { Id } from "../../convex/_generated/dataModel";
 import { useLastOdometer } from "../hooks/useLastOdometer";
+import FileUpload from "../components/FileUpload";
+
+interface MaintenanceRecordForm {
+    vehicleId: string;
+    type: string;
+    status: string;
+    serviceDate: string;
+    completionDate: string;
+    odometer: string;
+    description: string;
+    vendorName: string;
+    billNumber: string;
+    cost: string;
+    invoiceId?: Id<"_storage">;
+}
 
 interface MaintenanceProps {
     plant?: string;
@@ -28,7 +43,7 @@ export default function Maintenance({ plant }: MaintenanceProps) {
     const activeVehicles = vehiclesData.filter((v: any) => v.status !== "Decommissioned");
 
     // Form state
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<MaintenanceRecordForm>({
         vehicleId: "",
         type: "Scheduled",
         status: "Scheduled",
@@ -39,6 +54,7 @@ export default function Maintenance({ plant }: MaintenanceProps) {
         vendorName: "",
         billNumber: "",
         cost: "",
+        invoiceId: undefined,
     });
 
     const resetForm = () => {
@@ -53,6 +69,7 @@ export default function Maintenance({ plant }: MaintenanceProps) {
             vendorName: "",
             billNumber: "",
             cost: "",
+            invoiceId: undefined,
         });
         setEditingRecord(null);
         setShowAddModal(false);
@@ -70,6 +87,7 @@ export default function Maintenance({ plant }: MaintenanceProps) {
             vendorName: record.vendorName || "",
             billNumber: record.billNumber || "",
             cost: record.cost.toString(),
+            invoiceId: record.invoiceId,
         });
         setEditingRecord(record);
         setShowAddModal(true);
@@ -110,6 +128,7 @@ export default function Maintenance({ plant }: MaintenanceProps) {
                 vendorName: formData.vendorName || undefined,
                 billNumber: formData.billNumber || undefined,
                 cost: Number(formData.cost),
+                invoiceId: formData.invoiceId,
             };
 
             if (editingRecord) {
@@ -489,6 +508,18 @@ export default function Maintenance({ plant }: MaintenanceProps) {
                                             placeholder="0.00"
                                         />
                                     </div>
+
+                                    {formData.status === "Completed" && (
+                                        <div className="space-y-2 md:col-span-2 animate-in fade-in slide-in-from-top-2 duration-300 pb-4">
+                                            <FileUpload
+                                                label="Service Invoice / Bill Copy"
+                                                acceptedTypes="image/*,.pdf"
+                                                storageId={formData.invoiceId}
+                                                onUploadComplete={(id) => setFormData({ ...formData, invoiceId: id })}
+                                                onRemove={() => setFormData({ ...formData, invoiceId: undefined })}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </form>
                         </div>
