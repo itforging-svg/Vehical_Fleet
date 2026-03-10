@@ -3,7 +3,8 @@ import { api } from "../../convex/_generated/api";
 import { Navigation, Clock, ArrowRight, Edit2, Save, XCircle, Search, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 
-export default function InternalMovementLogs({ plant }: { plant?: string }) {
+export default function InternalMovementLogs({ user }: { user?: any }) {
+    const plant = user?.plant;
     const trips = useQuery(api.trips.list, { plant }) || [];
     const vehicles = useQuery(api.vehicles.list, {}) || [];
     const drivers = useQuery(api.drivers.list) || [];
@@ -42,7 +43,7 @@ export default function InternalMovementLogs({ plant }: { plant?: string }) {
             alert("End odometer cannot be less than start odometer."); return;
         }
         try {
-            await updateTripStatus({ id: completingTripId as any, status: "Completed", endTime: Date.now(), endOdometer: endOdo });
+            await updateTripStatus({ id: completingTripId as any, status: "Completed", endTime: Date.now(), endOdometer: endOdo, performedBy: user?.name || "Unknown Admin" });
             setCompletingTripId(null); setEndOdometer("");
         } catch { alert("Failed to complete trip."); }
     };
@@ -59,7 +60,8 @@ export default function InternalMovementLogs({ plant }: { plant?: string }) {
                     endLocation: editingLog.endLocation,
                     startOdometer: editingLog.startOdometer ? Number(editingLog.startOdometer) : undefined,
                     endOdometer: editingLog.endOdometer ? Number(editingLog.endOdometer) : undefined,
-                }
+                },
+                performedBy: user?.name || "Unknown Admin"
             });
             setEditingLog(null);
         } catch { alert("Failed to update log entry."); }

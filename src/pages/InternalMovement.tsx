@@ -68,14 +68,16 @@ export default function InternalMovement() {
                 startTime: Date.now(),
                 startOdometer: Number(formData.startOdometer),
                 status: "In Progress",
-                notes: formData.notes
+                notes: formData.notes,
+                performedBy: "Internal System"
             });
 
             await createTrip({
                 id: tripId,
                 vehicleId: formData.vehicleId as any,
                 driverId: formData.driverId as any,
-                status: "In Progress"
+                status: "In Progress",
+                performedBy: "Internal System"
             });
 
             setSuccess(true);

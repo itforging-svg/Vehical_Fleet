@@ -4,7 +4,8 @@ import { ClipboardList, CheckCircle, XCircle, Search, Clock, ArrowRight, Edit2, 
 import { useState, useEffect } from "react";
 import { useLastOdometer } from "../hooks/useLastOdometer";
 
-export default function Requests({ plant }: { plant?: string }) {
+export default function Requests({ user }: { user?: any }) {
+    const plant = user?.plant;
     const requests = useQuery(api.requests.list, { plant }) || [];
     const vehicles = useQuery(api.vehicles.list, { plant }) || [];
     const drivers = useQuery(api.drivers.list, {}) || [];
@@ -46,7 +47,7 @@ export default function Requests({ plant }: { plant?: string }) {
         if (!activeTrip) return;
         if (confirm("Is the vehicle back at plant? This will release the assets.")) {
             try {
-                await updateTripStatus({ id: activeTrip._id, status: "Completed", endTime: Date.now(), endOdometer: Number(endOdometer) });
+                await updateTripStatus({ id: activeTrip._id, status: "Completed", endTime: Date.now(), endOdometer: Number(endOdometer), performedBy: user?.name || "Unknown Admin" });
                 setCompletingId(null); setEndOdometer("");
             } catch { alert("Failed to complete trip."); }
         }
@@ -56,7 +57,7 @@ export default function Requests({ plant }: { plant?: string }) {
         e.preventDefault();
         try {
             const { _id, _creationTime, status, requestId, vehicleId, driverId, createdAt, ...updates } = editingRequest;
-            await updateRequestDetails({ id: _id, updates });
+            await updateRequestDetails({ id: _id, updates, performedBy: user?.name || "Unknown Admin" });
             const linkedTrip = trips.find(t => t.requestId === requestId);
             if (linkedTrip) {
                 await updateTripDetails({
@@ -67,7 +68,8 @@ export default function Requests({ plant }: { plant?: string }) {
                         purpose: updates.purpose,
                         startLocation: updates.pickupLocation,
                         endLocation: updates.dropLocation
-                    }
+                    },
+                    performedBy: user?.name || "Unknown Admin"
                 });
             }
             setEditingRequest(null);
@@ -96,7 +98,7 @@ export default function Requests({ plant }: { plant?: string }) {
     const handleAction = async (id: any, status: string) => {
         if (status === "approved") { setAssigningId(id); return; }
         if (confirm(`Are you sure you want to ${status} this request?`)) {
-            await updateStatus({ id, status });
+            await updateStatus({ id, status, performedBy: user?.name || "Unknown Admin" });
         }
     };
 
@@ -109,7 +111,8 @@ export default function Requests({ plant }: { plant?: string }) {
                 id: assigningId as any, status: "approved",
                 vehicleId: selection.vehicleId as any,
                 driverId: selection.driverId as any,
-                startOdometer: Number(selection.startOdometer)
+                startOdometer: Number(selection.startOdometer),
+                performedBy: user?.name || "Unknown Admin"
             });
             setAssigningId(null);
             setSelection({ vehicleId: "", driverId: "", startOdometer: "" });

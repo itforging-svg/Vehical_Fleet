@@ -2,7 +2,8 @@ import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Truck, Users, MapPin, Gauge, ClipboardList, LayoutDashboard } from "lucide-react";
 
-export default function Dashboard({ plant }: { plant?: string }) {
+export default function Dashboard({ user }: { user?: any }) {
+    const plant = user?.plant;
     const vehicles = useQuery(api.vehicles.list, { plant }) || [];
     const drivers = useQuery(api.drivers.list, {}) || [];
     const requests = useQuery(api.requests.list, { plant }) || [];

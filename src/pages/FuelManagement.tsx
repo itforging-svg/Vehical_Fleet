@@ -4,11 +4,8 @@ import { api } from "../../convex/_generated/api";
 import { Plus, Edit2, Trash2, Fuel, DollarSign, TrendingUp, Calendar, Search, XCircle, Save } from "lucide-react";
 import { useLastOdometer } from "../hooks/useLastOdometer";
 
-interface FuelManagementProps {
-    plant?: string;
-}
-
-export default function FuelManagement({ plant }: FuelManagementProps) {
+export default function FuelManagement({ user }: { user?: any }) {
+    const plant = user?.plant;
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingRecord, setEditingRecord] = useState<any>(null);
     const [selectedVehicle, setSelectedVehicle] = useState<string>("");
@@ -113,10 +110,10 @@ export default function FuelManagement({ plant }: FuelManagementProps) {
                     quantity: Number(formData.quantity),
                     pricePerLiter: Number(formData.pricePerLiter),
                     currentOdometer: Number(formData.currentOdometer),
-                    location: formData.location || undefined,
                     vendorName: formData.vendorName || undefined,
                     billNumber: formData.billNumber || undefined,
                     remarks: formData.remarks || undefined,
+                    performedBy: user?.name || "Unknown Admin"
                 });
                 alert("Fuel record updated successfully!");
             } else {
@@ -133,7 +130,7 @@ export default function FuelManagement({ plant }: FuelManagementProps) {
                     vendorName: formData.vendorName || undefined,
                     billNumber: formData.billNumber || undefined,
                     plant: plant || "General",
-                    addedBy: "Admin",
+                    addedBy: user?.adminId || "Admin",
                     remarks: formData.remarks || undefined,
                 });
                 alert("Fuel record added successfully!");
@@ -165,7 +162,7 @@ export default function FuelManagement({ plant }: FuelManagementProps) {
 
     const handleDelete = async (id: string) => {
         try {
-            await deleteRecord({ id: id as any });
+            await deleteRecord({ id: id as any, performedBy: user?.name || "Unknown Admin" });
             setConfirmDeleteId(null);
         } catch (error) {
             alert("Failed to delete fuel record.");

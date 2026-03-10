@@ -145,16 +145,17 @@ export const update = mutation({
         rcFileId: v.optional(v.id("_storage")),
         insuranceId: v.optional(v.id("_storage")),
         pucId: v.optional(v.id("_storage")),
+        performedBy: v.string(), // Added for auditing
     },
     handler: async (ctx, args) => {
-        const { id, ...data } = args;
+        const { id, performedBy, ...data } = args;
         await ctx.db.patch(id, data);
         await ctx.db.insert("auditLogs", {
             action: "UPDATE",
             module: "Vehicles",
             recordId: id,
             details: `Updated vehicle: ${data.registrationNumber}`,
-            performedBy: data.addedBy ?? "Unknown Admin",
+            performedBy: performedBy,
             timestamp: Date.now(),
             plant: data.locationPlant,
         });

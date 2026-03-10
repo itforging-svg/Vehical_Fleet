@@ -20,11 +20,8 @@ interface MaintenanceRecordForm {
     invoiceId?: Id<"_storage">;
 }
 
-interface MaintenanceProps {
-    plant?: string;
-}
-
-export default function Maintenance({ plant }: MaintenanceProps) {
+export default function Maintenance({ user }: { user?: any }) {
+    const plant = user?.plant;
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingRecord, setEditingRecord] = useState<any>(null);
     const [searchQuery, setSearchQuery] = useState("");
@@ -95,7 +92,7 @@ export default function Maintenance({ plant }: MaintenanceProps) {
 
     const handleDelete = async (id: string) => {
         try {
-            await deleteRecord({ id: id as Id<"maintenanceRecords"> });
+            await deleteRecord({ id: id as Id<"maintenanceRecords">, performedBy: user?.name || "Unknown Admin" });
             setConfirmDeleteId(null);
         } catch (error) {
             alert("Failed to delete record.");
@@ -135,16 +132,10 @@ export default function Maintenance({ plant }: MaintenanceProps) {
                 await updateRecord({
                     id: editingRecord._id,
                     ...payload,
+                    performedBy: user?.name || "Unknown Admin"
                 });
             } else {
-                // Get the admin name (usually stored in local storage or context, assuming "Admin" as fallback)
-                let addedBy = "Admin";
-                const userObj = localStorage.getItem("user");
-                if (userObj) {
-                    try {
-                        addedBy = JSON.parse(userObj).name || "Admin";
-                    } catch (e) { }
-                }
+                const addedBy = user?.name || "Admin";
 
                 await createRecord({
                     ...payload,

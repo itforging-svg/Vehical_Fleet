@@ -79,16 +79,17 @@ export const update = mutation({
         licenseFrontId: v.optional(v.id("_storage")),
         licenseBackId: v.optional(v.id("_storage")),
         aadharId: v.optional(v.id("_storage")),
+        performedBy: v.string(), // Added for auditing
     },
     handler: async (ctx, args) => {
-        const { id, ...data } = args;
+        const { id, performedBy, ...data } = args;
         await ctx.db.patch(id, data);
         await ctx.db.insert("auditLogs", {
             action: "UPDATE",
             module: "Drivers",
             recordId: id,
             details: `Updated driver: ${data.name} (${data.driverId})`,
-            performedBy: data.addedBy ?? "Unknown Admin",
+            performedBy: performedBy,
             timestamp: Date.now(),
             plant: data.plant,
         });

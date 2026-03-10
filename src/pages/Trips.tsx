@@ -3,7 +3,8 @@ import { api } from "../../convex/_generated/api";
 import { Map, Clock, ArrowRight, CheckCircle2, Search, XCircle, Edit2, Save } from "lucide-react";
 import { useState } from "react";
 
-export default function Trips({ plant }: { plant?: string }) {
+export default function Trips({ user }: { user?: any }) {
+    const plant = user?.plant;
     const requests = useQuery(api.requests.list, { plant }) || [];
     const trips = useQuery(api.trips.list, { plant }) || [];
     const updateTripStatus = useMutation(api.trips.updateStatus);
@@ -50,7 +51,13 @@ export default function Trips({ plant }: { plant?: string }) {
             alert("End odometer cannot be less than start odometer."); return;
         }
         try {
-            await updateTripStatus({ id: completingTripId as any, status: "Completed", endTime: Date.now(), endOdometer: endOdo });
+            await updateTripStatus({
+                id: completingTripId as any,
+                status: "Completed",
+                endTime: Date.now(),
+                endOdometer: endOdo,
+                performedBy: user?.name || "Unknown Admin"
+            });
             setCompletingTripId(null); setEndOdometer("");
             alert("Trip completed successfully!");
         } catch { alert("Failed to complete trip."); }
@@ -69,7 +76,8 @@ export default function Trips({ plant }: { plant?: string }) {
                         endLocation: editingLog.endLocation,
                         startOdometer: editingLog.startOdometer ? Number(editingLog.startOdometer) : undefined,
                         endOdometer: editingLog.endOdometer ? Number(editingLog.endOdometer) : undefined,
-                    }
+                    },
+                    performedBy: user?.name || "Unknown Admin"
                 });
             } else {
                 await updateRequestDetails({
@@ -79,7 +87,8 @@ export default function Trips({ plant }: { plant?: string }) {
                         purpose: editingLog.purpose,
                         pickupLocation: editingLog.startLocation,
                         dropLocation: editingLog.endLocation,
-                    }
+                    },
+                    performedBy: user?.name || "Unknown Admin"
                 });
             }
             setEditingLog(null);

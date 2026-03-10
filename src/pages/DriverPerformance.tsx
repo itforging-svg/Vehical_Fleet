@@ -3,7 +3,8 @@ import { api } from "../../convex/_generated/api";
 import { Activity, Trophy, Droplets, Award, Search } from "lucide-react";
 import { useState } from "react";
 
-export default function DriverPerformance({ plant }: { plant?: string }) {
+export default function DriverPerformance({ user }: { user?: any }) {
+    const plant = user?.plant;
     const [searchTerm, setSearchTerm] = useState("");
 
     const performanceStats = useQuery(api.drivers.getPerformanceStats, { plant });

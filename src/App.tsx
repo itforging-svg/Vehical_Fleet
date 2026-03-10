@@ -47,17 +47,17 @@ function App() {
           {/* Protected Admin Routes */}
           <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
             <Route element={<Layout user={user} onLogout={handleLogout} />}>
-              <Route path="/dashboard" element={<Dashboard plant={user?.plant} />} />
-              <Route path="/requests" element={<Requests plant={user?.plant} />} />
-              <Route path="/vehicles" element={<Vehicles plant={user?.plant} />} />
-              <Route path="/drivers" element={<Drivers plant={user?.plant} />} />
-              <Route path="/driver-performance" element={<DriverPerformance plant={user?.plant} />} />
-              <Route path="/audit-logs" element={<AuditLogs />} />
-              <Route path="/trips" element={<Trips plant={user?.plant} />} />
-              <Route path="/internal-logs" element={<InternalMovementLogs plant={user?.plant} />} />
-              <Route path="/fuel" element={<FuelManagement plant={user?.plant} />} />
-              <Route path="/maintenance" element={<Maintenance plant={user?.plant} />} />
-              <Route path="/reports" element={<Reports plant={user?.plant} />} />
+              <Route path="/dashboard" element={<Dashboard user={user} />} />
+              <Route path="/requests" element={<Requests user={user} />} />
+              <Route path="/vehicles" element={<Vehicles user={user} />} />
+              <Route path="/drivers" element={<Drivers user={user} />} />
+              <Route path="/driver-performance" element={<DriverPerformance user={user} />} />
+              <Route path="/audit-logs" element={<AuditLogs user={user} />} />
+              <Route path="/trips" element={<Trips user={user} />} />
+              <Route path="/internal-logs" element={<InternalMovementLogs user={user} />} />
+              <Route path="/fuel" element={<FuelManagement user={user} />} />
+              <Route path="/maintenance" element={<Maintenance user={user} />} />
+              <Route path="/reports" element={<Reports user={user} />} />
               <Route path="/notifications" element={<NotificationPage />} />
               <Route path="/settings" element={<Settings />} />
             </Route>

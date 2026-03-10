@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Menu, X, Bell, Home, Truck, Users, Activity, Settings, LogOut, Search, Map, CheckCircle2, Navigation, KeyRound, User, Fuel, PenTool, ExternalLink, FileBarChart, ClipboardList, LayoutDashboard, ChevronLeft, ChevronRight, Clock, Wifi } from "lucide-react";
+import { Bell, Truck, Users, Activity, Settings, LogOut, Map, Navigation, Fuel, PenTool, FileBarChart, ClipboardList, LayoutDashboard, ChevronLeft, ChevronRight, Clock, Wifi } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { clsx, type ClassValue } from "clsx";

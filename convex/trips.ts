@@ -24,7 +24,7 @@ export const createRequest = mutation({
         status: v.string(),
         notes: v.optional(v.string()),
         startOdometer: v.optional(v.number()),
-        performedBy: v.optional(v.string()), // Added for auditing
+        performedBy: v.string(), // Added for auditing
     },
     handler: async (ctx, args) => {
         // Generate unique CSL ID for internal movement
@@ -37,7 +37,7 @@ export const createRequest = mutation({
             module: "Operational Logs",
             recordId: id,
             details: `Created trip request for ${args.requesterName}`,
-            performedBy: performedBy ?? "Unknown Admin",
+            performedBy: performedBy,
             timestamp: Date.now(),
             plant: args.startLocation,
         });

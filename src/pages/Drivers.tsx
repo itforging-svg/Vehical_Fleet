@@ -30,7 +30,7 @@ interface Driver {
     aadharId?: Id<"_storage">;
 }
 
-export default function Drivers() {
+export default function Drivers({ user }: { user?: any }) {
     const drivers = useQuery(api.drivers.list, {}) || [];
     const createDriver = useMutation(api.drivers.create);
     const updateDriver = useMutation(api.drivers.update);
@@ -55,12 +55,12 @@ export default function Drivers() {
         licenseValidity: "",
         licenseIssuedBy: "",
         status: "Available",
-        addedBy: "cslsuperadmin",
         addedDate: new Date().toISOString().split('T')[0],
         photoId: undefined,
         licenseFrontId: undefined,
         licenseBackId: undefined,
         aadharId: undefined,
+        addedBy: user?.adminId || "cslsuperadmin",
     });
 
     const filteredDrivers = drivers.filter(d =>
@@ -112,12 +112,12 @@ export default function Drivers() {
                 licenseValidity: "",
                 licenseIssuedBy: "",
                 status: "Available",
-                addedBy: "cslsuperadmin",
                 addedDate: new Date().toISOString().split('T')[0],
                 photoId: undefined,
                 licenseFrontId: undefined,
                 licenseBackId: undefined,
                 aadharId: undefined,
+                addedBy: user?.adminId || "cslsuperadmin",
             });
         }
         setActiveSection("identification");
@@ -135,7 +135,7 @@ export default function Drivers() {
         setIsSubmitting(true);
         try {
             if (editingId) {
-                await updateDriver({ id: editingId as any, ...formData });
+                await updateDriver({ id: editingId as any, ...formData, performedBy: user?.name || "Unknown Admin" });
             } else {
                 await createDriver(formData);
             }
@@ -150,7 +150,7 @@ export default function Drivers() {
     const handleDelete = async (id: string, name: string) => {
         if (window.confirm(`Are you sure you want to delete driver ${name}?`)) {
             try {
-                await removeDriver({ id: id as any });
+                await removeDriver({ id: id as any, performedBy: user?.name || "Unknown Admin" });
             } catch (error) {
                 alert("Failed to delete driver.");
             }

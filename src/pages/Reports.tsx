@@ -6,13 +6,11 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-interface ReportsProps {
-    plant?: string;
-}
 
 type ModuleType = "trips" | "fuel" | "maintenance" | "requests";
 
-export default function Reports({ plant }: ReportsProps) {
+export default function Reports({ user }: { user?: any }) {
+    const plant = user?.plant;
     const [selectedModule, setSelectedModule] = useState<ModuleType>("trips");
     const [startDate, setStartDate] = useState(() => {
         const d = new Date();

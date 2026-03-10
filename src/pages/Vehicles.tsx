@@ -41,7 +41,8 @@ interface Vehicle {
     pucId?: Id<"_storage">;
 }
 
-export default function Vehicles({ plant }: { plant?: string }) {
+export default function Vehicles({ user }: { user?: any }) {
+    const plant = user?.plant;
     const vehicles = useQuery(api.vehicles.list, { plant }) || [];
     const createVehicle = useMutation(api.vehicles.create);
     const updateVehicle = useMutation(api.vehicles.update);
@@ -80,7 +81,7 @@ export default function Vehicles({ plant }: { plant?: string }) {
         locationPlant: plant || "",
         vendorName: "",
         status: "Active",
-        addedBy: "cslsuperadmin",
+        addedBy: user?.adminId || "cslsuperadmin",
         remarks: "",
         photoId: undefined,
         rcFileId: undefined,
@@ -123,7 +124,7 @@ export default function Vehicles({ plant }: { plant?: string }) {
                 locationPlant: vehicle.locationPlant || "",
                 vendorName: vehicle.vendorName || "",
                 status: vehicle.status || "Active",
-                addedBy: vehicle.addedBy || "cslsuperadmin",
+                addedBy: vehicle.addedBy || user?.adminId || "cslsuperadmin",
                 remarks: vehicle.remarks || "",
                 photoId: vehicle.photoId,
                 rcFileId: vehicle.rcFileId,
@@ -141,7 +142,7 @@ export default function Vehicles({ plant }: { plant?: string }) {
                 fitnessExpiryDate: "", permitType: "State", permitExpiryDate: "",
                 ownershipType: "Company-owned", assignedDepartment: "",
                 assignedDriver: "", locationPlant: plant || "", vendorName: "",
-                status: "Active", addedBy: "cslsuperadmin", remarks: "",
+                status: "Active", addedBy: user?.adminId || "cslsuperadmin", remarks: "",
                 photoId: undefined, rcFileId: undefined, insuranceId: undefined, pucId: undefined,
             });
         }
@@ -154,9 +155,9 @@ export default function Vehicles({ plant }: { plant?: string }) {
         setIsSubmitting(true);
         try {
             if (editingId) {
-                await updateVehicle({ id: editingId as any, ...formData });
+                await updateVehicle({ id: editingId as any, ...formData, performedBy: user?.name || "Unknown Admin" });
             } else {
-                await createVehicle(formData);
+                await createVehicle({ ...formData, addedBy: user?.adminId || "cslsuperadmin" });
             }
             // Trigger expiry sync
             await syncExpiries();
@@ -171,7 +172,7 @@ export default function Vehicles({ plant }: { plant?: string }) {
     const handleDelete = async (id: string, regNo: string) => {
         if (window.confirm(`Are you sure you want to delete vehicle ${regNo}?`)) {
             try {
-                await removeVehicle({ id: id as any });
+                await removeVehicle({ id: id as any, performedBy: user?.name || "Unknown Admin" });
             } catch (error) {
                 alert("Failed to delete vehicle.");
             }

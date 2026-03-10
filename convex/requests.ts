@@ -36,7 +36,7 @@ export const createRequest = mutation({
         tripType: v.string(),
         vehicleType: v.string(),
         bookingDateTime: v.optional(v.string()),
-        performedBy: v.optional(v.string()), // Added for auditing
+        performedBy: v.string(), // Added for auditing
     },
     handler: async (ctx, args) => {
         // Generate Request ID: CSL-DD.MM.YY-NN (daily sequence)
@@ -55,7 +55,7 @@ export const createRequest = mutation({
             module: "Vehicle Requests",
             recordId: id,
             details: `Created vehicle request: ${requestId} for ${args.requesterName}`,
-            performedBy: performedBy ?? args.requesterName,
+            performedBy: performedBy,
             timestamp: Date.now(),
             plant: args.plant,
         });

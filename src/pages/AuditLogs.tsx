@@ -10,15 +10,17 @@ import {
     Activity,
 } from "lucide-react";
 
-export default function AuditLogs() {
+export default function AuditLogs({ user }: { user?: any }) {
     const [searchTerm, setSearchTerm] = useState("");
     const [moduleFilter, setModuleFilter] = useState("All");
     const [actionFilter, setActionFilter] = useState("All");
 
     const logs = useQuery(api.audit.list, {
+        plant: user?.role === "SuperAdmin" ? undefined : user?.plant,
         module: moduleFilter === "All" ? undefined : moduleFilter,
         action: actionFilter === "All" ? undefined : actionFilter,
     });
+    console.log("LOGS: ", logs);
 
     const filteredLogs = logs?.filter(log =>
         log.details.toLowerCase().includes(searchTerm.toLowerCase()) ||
