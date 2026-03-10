@@ -39,7 +39,7 @@ export default function Vehicles({ plant }: { plant?: string }) {
         ownershipType: "Company-owned",
         assignedDepartment: "",
         assignedDriver: "",
-        locationPlant: "",
+        locationPlant: plant || "",
         vendorName: "",
         status: "Active",
         addedBy: "cslsuperadmin",
@@ -94,7 +94,7 @@ export default function Vehicles({ plant }: { plant?: string }) {
                 insurancePolicyNumber: "", insuranceExpiryDate: "", pucExpiryDate: "",
                 fitnessExpiryDate: "", permitType: "State", permitExpiryDate: "",
                 ownershipType: "Company-owned", assignedDepartment: "",
-                assignedDriver: "", locationPlant: "", vendorName: "",
+                assignedDriver: "", locationPlant: plant || "", vendorName: "",
                 status: "Active", addedBy: "cslsuperadmin", remarks: ""
             });
         }
@@ -133,27 +133,33 @@ export default function Vehicles({ plant }: { plant?: string }) {
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Header / Actions */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="relative flex-1 max-w-md group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#f39c12] transition-colors" size={18} />
-                    <input
-                        className="w-full bg-white border border-slate-200 rounded-2xl py-3.5 pl-12 pr-4 text-sm outline-none focus:ring-2 focus:ring-[#f39c12]/20 focus:border-[#f39c12] transition-all shadow-sm"
-                        placeholder="Search by registration, model or make..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+            {/* Page Header */}
+            <div className="page-header">
+                <div className="flex items-center gap-4">
+                    <div className="page-header-icon">
+                        <Truck size={26} />
+                    </div>
+                    <div>
+                        <h1 className="page-title">Fleet Management</h1>
+                        <p className="page-subtitle">Register, track and manage all company vehicles</p>
+                    </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-2 px-6 py-3.5 bg-white border border-slate-200 rounded-2xl text-xs font-black uppercase tracking-widest text-[#0e2a63] hover:bg-slate-50 transition-all shadow-sm">
-                        <Filter size={16} />
+                    <div className="relative group">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#f39c12] transition-colors" size={16} />
+                        <input
+                            className="bg-white border border-slate-200 rounded-2xl py-3 pl-11 pr-4 text-sm outline-none focus:ring-2 focus:ring-[#f39c12]/20 focus:border-[#f39c12] transition-all shadow-sm w-64"
+                            placeholder="Search vehicles..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <button className="btn-ghost">
+                        <Filter size={14} />
                         Filter
                     </button>
-                    <button
-                        onClick={() => handleOpenModal()}
-                        className="flex items-center gap-2 px-6 py-3.5 bg-[#f39c12] rounded-2xl text-xs font-black uppercase tracking-widest text-white hover:bg-[#e67e22] transition-all shadow-lg shadow-orange-500/20 active:scale-95"
-                    >
-                        <Plus size={18} />
+                    <button onClick={() => handleOpenModal()} className="btn-primary">
+                        <Plus size={16} />
                         Add Vehicle
                     </button>
                 </div>
@@ -403,7 +409,7 @@ export default function Vehicles({ plant }: { plant?: string }) {
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Plant</label>
                                             <select className="input-field py-3.5" value={formData.locationPlant} onChange={e => setFormData({ ...formData, locationPlant: e.target.value })}>
-                                                {["Seamsless", "Forging", "Main Plant (SMS)", "Bright Bar", "Flat Bar", "Wire Plant", "Main Plant 2 ( SMS 2 )", "40\"Inch Mill"].map(p => <option key={p} value={p}>{p}</option>)}
+                                                {["Seamless", "Forging", "Main Plant (SMS)", "Bright Bar", "Flat Bar", "Wire Plant", "Main Plant 2 ( SMS 2 )", "40\"Inch Mill"].map(p => <option key={p} value={p}>{p}</option>)}
                                             </select>
                                         </div>
                                         <div className="space-y-2">

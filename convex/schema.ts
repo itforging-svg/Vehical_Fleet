@@ -37,6 +37,7 @@ export default defineSchema({
     status: v.string(), // Active / In maintenance / Decommissioned / On Duty
     addedBy: v.optional(v.string()),
     remarks: v.optional(v.string()),
+    deletedAt: v.optional(v.number()), // soft-delete timestamp
   }).index("by_registrationNumber", ["registrationNumber"]),
 
   drivers: defineTable({
@@ -54,6 +55,7 @@ export default defineSchema({
     status: v.string(), // e.g. "Available", "On Duty", "Inactive"
     addedBy: v.optional(v.string()),
     addedDate: v.optional(v.string()),
+    deletedAt: v.optional(v.number()), // soft-delete timestamp
   }).index("by_licenseNumber", ["licenseNumber"])
     .index("by_driverId", ["driverId"]),
 
@@ -81,6 +83,8 @@ export default defineSchema({
     title: v.string(),
     message: v.string(),
     status: v.string(), // "unread", "read"
+    expiryDate: v.optional(v.string()), // The specific date this notification is for
+    leadDays: v.optional(v.number()), // 15, 7, 3, or 0 (expired)
     createdAt: v.number(),
   })
     .index("by_status", ["status"])
@@ -143,6 +147,7 @@ export default defineSchema({
     refuelDate: v.number(), // timestamp
     addedBy: v.string(), // Admin who added the record
     remarks: v.optional(v.string()),
+    deletedAt: v.optional(v.number()), // soft-delete timestamp
   })
     .index("by_vehicleId", ["vehicleId"])
     .index("by_plant", ["plant"])

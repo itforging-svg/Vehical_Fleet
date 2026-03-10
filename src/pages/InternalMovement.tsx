@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigation, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import PageWrapper from "../components/PageWrapper";
-
+import { useLastOdometer } from "../hooks/useLastOdometer";
 import { useNavigate } from "react-router-dom";
 
 export default function InternalMovement() {
@@ -20,6 +20,7 @@ export default function InternalMovement() {
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [endLocationOther, setEndLocationOther] = useState("");
 
     const [formData, setFormData] = useState({
         vehicleId: "",
@@ -31,6 +32,14 @@ export default function InternalMovement() {
         notes: ""
     });
 
+    // Auto-populate last odometer when vehicle is selected
+    const lastOdo = useLastOdometer(formData.vehicleId || undefined);
+    useEffect(() => {
+        if (lastOdo !== null && lastOdo !== undefined) {
+            setFormData(prev => ({ ...prev, startOdometer: String(lastOdo) }));
+        }
+    }, [lastOdo]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.startOdometer) {
@@ -40,12 +49,22 @@ export default function InternalMovement() {
         }
 
         try {
+            const resolvedEndLocation = formData.endLocation === "__others__"
+                ? endLocationOther.trim()
+                : formData.endLocation;
+
+            if (!resolvedEndLocation) {
+                alert("Please specify the destination.");
+                setIsSubmitting(false);
+                return;
+            }
+
             const tripId = await createRequest({
                 requesterName: "Internal System",
                 requesterDepartment: "Logistics",
                 purpose: formData.purpose,
                 startLocation: formData.startLocation,
-                endLocation: formData.endLocation,
+                endLocation: resolvedEndLocation,
                 startTime: Date.now(),
                 startOdometer: Number(formData.startOdometer),
                 status: "In Progress",
@@ -154,7 +173,7 @@ export default function InternalMovement() {
                                 onChange={e => setFormData({ ...formData, startLocation: e.target.value })}
                             >
                                 <option value="">Select Origin</option>
-                                {["Seamsless", "Forging", "Main Plant (SMS)", "Bright Bar", "Flat Bar", "Wire Plant", "Main Plant 2 ( SMS 2 )", "40\"Inch Mill", "Pickup / Drop of Contractor"].map(p => (
+                                {["Seamless", "Forging", "Main Plant (SMS)", "Bright Bar", "Flat Bar", "Wire Plant", "Main Plant 2 ( SMS 2 )", "40\"Inch Mill", "Pickup / Drop of Contractor"].map(p => (
                                     <option key={p} value={p}>{p}</option>
                                 ))}
                             </select>
@@ -165,13 +184,27 @@ export default function InternalMovement() {
                                 required
                                 className="input-field py-3.5"
                                 value={formData.endLocation}
-                                onChange={e => setFormData({ ...formData, endLocation: e.target.value })}
+                                onChange={e => {
+                                    setFormData({ ...formData, endLocation: e.target.value });
+                                    if (e.target.value !== "__others__") setEndLocationOther("");
+                                }}
                             >
                                 <option value="">Select Destination</option>
-                                {["Seamsless", "Forging", "Main Plant (SMS)", "Bright Bar", "Flat Bar", "Wire Plant", "Main Plant 2 ( SMS 2 )", "40\"Inch Mill", "Pickup / Drop of Contractor"].map(p => (
+                                {["Seamless", "Forging", "Main Plant (SMS)", "Bright Bar", "Flat Bar", "Wire Plant", "Main Plant 2 ( SMS 2 )", "40\"Inch Mill", "Pickup / Drop of Contractor"].map(p => (
                                     <option key={p} value={p}>{p}</option>
                                 ))}
+                                <option value="__others__">Others</option>
                             </select>
+                            {formData.endLocation === "__others__" && (
+                                <input
+                                    type="text"
+                                    required
+                                    className="input-field py-3.5 mt-2 animate-in fade-in slide-in-from-top-1 duration-200"
+                                    placeholder="Specify destination..."
+                                    value={endLocationOther}
+                                    onChange={e => setEndLocationOther(e.target.value)}
+                                />
+                            )}
                         </div>
                         <div className="space-y-3">
                             <label className="text-[11px] font-black uppercase tracking-[0.2em] text-[#0e2a63]/70">Current Odometer</label>

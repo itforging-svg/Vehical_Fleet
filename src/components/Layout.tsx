@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { LayoutDashboard, Truck, Users, Map, Settings, LogOut, ChevronLeft, ChevronRight, Bell, ClipboardList, Fuel } from "lucide-react";
+import { LayoutDashboard, Truck, Users, Map, Settings, LogOut, ChevronLeft, ChevronRight, Bell, ClipboardList, Fuel, Navigation } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { clsx, type ClassValue } from "clsx";
@@ -21,6 +21,7 @@ const navItems = [
     { id: "vehicles", label: "Fleet Management", icon: Truck, path: "/vehicles" },
     { id: "drivers", label: "Drivers", icon: Users, path: "/drivers" },
     { id: "trips", label: "Operational Logs", icon: Map, path: "/trips" },
+    { id: "internalMovements", label: "Internal Movements", icon: Navigation, path: "/internal-logs" },
     { id: "fuel", label: "Fuel Management", icon: Fuel, path: "/fuel" },
     { id: "notifications", label: "Notifications", icon: Bell, path: "/notifications" },
 ];

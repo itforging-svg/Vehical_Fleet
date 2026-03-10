@@ -52,7 +52,7 @@ export const syncExpiries = mutation({
     handler: async (ctx) => {
         const vehicles = await ctx.db.query("vehicles").collect();
         const now = new Date();
-        const todayStr = now.toISOString().split("T")[0];
+        const todayAtMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 
         for (const vehicle of vehicles) {
             const checks = [
@@ -66,28 +66,56 @@ export const syncExpiries = mutation({
             for (const check of checks) {
                 if (!check.date) continue;
 
-                // Document is expired if expiry date is today or in the past
-                if (check.date <= todayStr) {
-                    // Check if notification already exists for this vehicle and type that is unread
-                    const existing = await ctx.db
-                        .query("notifications")
-                        .withIndex("by_vehicle_type", (q) =>
-                            q.eq("vehicleId", vehicle._id).eq("type", check.type)
-                        )
-                        .collect();
+                const expiryDate = new Date(check.date);
+                const expiryAtMidnight = new Date(expiryDate.getFullYear(), expiryDate.getMonth(), expiryDate.getDate()).getTime();
+                const diffTime = expiryAtMidnight - todayAtMidnight;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-                    const unreadExists = existing.some(n => n.status === "unread");
+                // Thresholds: 15, 7, 3, and 0 (expired)
+                const thresholds = [15, 7, 3, 0];
 
-                    if (!unreadExists) {
-                        await ctx.db.insert("notifications", {
-                            type: check.type,
-                            vehicleId: vehicle._id,
-                            registrationNumber: vehicle.registrationNumber,
-                            title: `${check.label} Expired`,
-                            message: `The ${check.label} for vehicle ${vehicle.registrationNumber} (${vehicle.model}) has expired on ${check.date}.`,
-                            status: "unread",
-                            createdAt: Date.now(),
-                        });
+                for (const threshold of thresholds) {
+                    const isThresholdReached = diffDays <= threshold;
+                    const isAppropriateThreshold = threshold === 0 ? diffDays <= 0 : (diffDays > 0 && diffDays <= threshold);
+
+                    if (isAppropriateThreshold) {
+                        // Check if a notification already exists for this vehicle, type, date, AND threshold
+                        const existing = await ctx.db
+                            .query("notifications")
+                            .withIndex("by_vehicle_type", (q) =>
+                                q.eq("vehicleId", vehicle._id).eq("type", check.type)
+                            )
+                            .collect();
+
+                        const alreadyNotified = existing.some(n =>
+                            n.expiryDate === check.date &&
+                            n.leadDays === threshold
+                        );
+
+                        if (!alreadyNotified) {
+                            let title = "";
+                            let message = "";
+
+                            if (threshold === 0) {
+                                title = `${check.label} Expired`;
+                                message = `The ${check.label} for vehicle ${vehicle.registrationNumber} (${vehicle.model}) has expired on ${check.date}.`;
+                            } else {
+                                title = `${check.label} Expiry Alert (${threshold} Days)`;
+                                message = `The ${check.label} for vehicle ${vehicle.registrationNumber} (${vehicle.model}) will expire in ${diffDays} days (${check.date}).`;
+                            }
+
+                            await ctx.db.insert("notifications", {
+                                type: check.type,
+                                vehicleId: vehicle._id,
+                                registrationNumber: vehicle.registrationNumber,
+                                title,
+                                message,
+                                status: "unread",
+                                expiryDate: check.date,
+                                leadDays: threshold,
+                                createdAt: Date.now(),
+                            });
+                        }
                     }
                 }
             }

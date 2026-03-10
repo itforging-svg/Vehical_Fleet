@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { generateCslId } from "./idHelper";
 
 export const list = query({
     args: {
@@ -37,11 +38,8 @@ export const createRequest = mutation({
         bookingDateTime: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
-        // Generate Request ID: REQ-YYYYMMDD-XXXX
-        const now = new Date();
-        const datePrefix = now.toISOString().split('T')[0].replace(/-/g, '');
-        const count = (await ctx.db.query("vehicleRequests").collect()).length + 1;
-        const requestId = `REQ-${datePrefix}-${count.toString().padStart(4, '0')}`;
+        // Generate Request ID: CSL-DD.MM.YY-NN (daily sequence)
+        const requestId = await generateCslId(ctx, "vehicleRequests");
 
         const id = await ctx.db.insert("vehicleRequests", {
             ...args,

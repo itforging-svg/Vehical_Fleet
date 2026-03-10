@@ -135,7 +135,7 @@ export default function RequestVehicle() {
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Plant</label>
                                         <select className="input-field" value={formData.plant} onChange={e => setFormData({ ...formData, plant: e.target.value })}>
-                                            {["Seamsless", "Forging", "Main Plant (SMS)", "Bright Bar", "Flat Bar", "Wire Plant", "Main Plant 2 ( SMS 2 )", "40\"Inch Mill"].map(p => <option key={p} value={p}>{p}</option>)}
+                                            {["Seamless", "Forging", "Main Plant (SMS)", "Bright Bar", "Flat Bar", "Wire Plant", "Main Plant 2 ( SMS 2 )", "40\"Inch Mill"].map(p => <option key={p} value={p}>{p}</option>)}
                                         </select>
                                     </div>
                                     <div className="space-y-2">

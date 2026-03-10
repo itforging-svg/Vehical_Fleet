@@ -4,7 +4,8 @@ import { v } from "convex/values";
 export const list = query({
     args: {},
     handler: async (ctx) => {
-        return await ctx.db.query("drivers").collect();
+        const all = await ctx.db.query("drivers").collect();
+        return all.filter(d => d.deletedAt === undefined);
     },
 });
 
@@ -66,6 +67,6 @@ export const update = mutation({
 export const remove = mutation({
     args: { id: v.id("drivers") },
     handler: async (ctx, args) => {
-        await ctx.db.delete(args.id);
+        await ctx.db.patch(args.id, { deletedAt: Date.now() });
     },
 });

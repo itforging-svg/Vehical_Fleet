@@ -13,6 +13,7 @@ import Requests from "./pages/Requests";
 import LoginPage from "./pages/LoginPage";
 import Settings from "./pages/Settings";
 import FuelManagement from "./pages/FuelManagement";
+import InternalMovementLogs from "./pages/InternalMovementLogs";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -47,6 +48,7 @@ function App() {
               <Route path="/vehicles" element={<Vehicles plant={user?.plant} />} />
               <Route path="/drivers" element={<Drivers />} />
               <Route path="/trips" element={<Trips plant={user?.plant} />} />
+              <Route path="/internal-logs" element={<InternalMovementLogs plant={user?.plant} />} />
               <Route path="/fuel" element={<FuelManagement plant={user?.plant} />} />
               <Route path="/notifications" element={<NotificationPage />} />
               <Route path="/settings" element={<Settings />} />

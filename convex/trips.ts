@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { generateCslId } from "./idHelper";
 
 export const list = query({
     args: { plant: v.optional(v.string()) },
@@ -25,7 +26,9 @@ export const createRequest = mutation({
         startOdometer: v.optional(v.number()),
     },
     handler: async (ctx, args) => {
-        return await ctx.db.insert("trips", args);
+        // Generate unique CSL ID for internal movement
+        const requestId = await generateCslId(ctx, "trips");
+        return await ctx.db.insert("trips", { ...args, requestId });
     },
 });
 

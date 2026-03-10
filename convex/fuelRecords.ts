@@ -8,7 +8,7 @@ export const list = query({
         vehicleId: v.optional(v.id("vehicles")),
     },
     handler: async (ctx, args) => {
-        let records = await ctx.db.query("fuelRecords").collect();
+        let records = (await ctx.db.query("fuelRecords").collect()).filter(r => r.deletedAt === undefined);
 
         // Filter by plant if provided
         if (args.plant) {
@@ -31,7 +31,7 @@ export const getStats = query({
         plant: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
-        let records = await ctx.db.query("fuelRecords").collect();
+        let records = (await ctx.db.query("fuelRecords").collect()).filter(r => r.deletedAt === undefined);
 
         // Filter by plant if provided
         if (args.plant) {
@@ -139,26 +139,73 @@ export const update = mutation({
     handler: async (ctx, args) => {
         const { id, ...updates } = args;
 
+        const record = await ctx.db.get(id);
+        if (!record) return;
+
+        let newQuantity = record.quantity;
+
         // Recalculate total cost if price or quantity changed
         if (updates.pricePerLiter !== undefined || updates.quantity !== undefined) {
-            const record = await ctx.db.get(id);
-            if (record) {
-                const newPrice = updates.pricePerLiter ?? record.pricePerLiter;
-                const newQuantity = updates.quantity ?? record.quantity;
-                (updates as any).totalCost = newPrice * newQuantity;
+            const newPrice = updates.pricePerLiter ?? record.pricePerLiter;
+            newQuantity = updates.quantity ?? record.quantity;
+            (updates as any).totalCost = newPrice * newQuantity;
+        }
+
+        // Recalculate distance and efficiency if odometer or quantity changed
+        if (updates.currentOdometer !== undefined || updates.quantity !== undefined) {
+            const newOdometer = updates.currentOdometer ?? record.currentOdometer;
+
+            if (record.lastOdometer !== undefined && record.lastOdometer !== null) {
+                const newDistanceCovered = newOdometer - record.lastOdometer;
+                (updates as any).distanceCovered = newDistanceCovered;
+
+                if (newDistanceCovered > 0 && newQuantity > 0) {
+                    (updates as any).fuelEfficiency = newDistanceCovered / newQuantity;
+                } else {
+                    (updates as any).fuelEfficiency = undefined;
+                }
             }
         }
 
         await ctx.db.patch(id, updates);
+
+        // If currentOdometer changed, update the subsequent record for this vehicle
+        // because its lastOdometer depends on this record's currentOdometer.
+        if (updates.currentOdometer !== undefined) {
+            const allVehicleRecords = await ctx.db
+                .query("fuelRecords")
+                .withIndex("by_vehicleId", q => q.eq("vehicleId", record.vehicleId))
+                .collect();
+
+            // Find the immediate next record in time
+            const subsequentRecords = allVehicleRecords
+                .filter(r => r.refuelDate > record.refuelDate)
+                .sort((a, b) => a.refuelDate - b.refuelDate);
+
+            if (subsequentRecords.length > 0) {
+                const nextRecord = subsequentRecords[0];
+                const newNextDistance = nextRecord.currentOdometer - updates.currentOdometer;
+                let newNextEfficiency = undefined;
+                if (newNextDistance > 0 && nextRecord.quantity > 0) {
+                    newNextEfficiency = newNextDistance / nextRecord.quantity;
+                }
+
+                await ctx.db.patch(nextRecord._id, {
+                    lastOdometer: updates.currentOdometer,
+                    distanceCovered: newNextDistance,
+                    fuelEfficiency: newNextEfficiency
+                });
+            }
+        }
     },
 });
 
-// Delete fuel record
+// Delete fuel record (soft delete)
 export const remove = mutation({
     args: {
         id: v.id("fuelRecords"),
     },
     handler: async (ctx, args) => {
-        await ctx.db.delete(args.id);
+        await ctx.db.patch(args.id, { deletedAt: Date.now() });
     },
 });

@@ -4,11 +4,34 @@ import { v } from "convex/values";
 export const list = query({
     args: { plant: v.optional(v.string()) },
     handler: async (ctx, args) => {
-        const vehicles = await ctx.db.query("vehicles").collect();
+        const vehicles = (await ctx.db.query("vehicles").collect()).filter(v => v.deletedAt === undefined);
         if (args.plant) {
             return vehicles.filter(v => v.locationPlant === args.plant);
         }
         return vehicles;
+    },
+});
+
+export const getLastOdometer = query({
+    args: { vehicleId: v.id("vehicles") },
+    handler: async (ctx, args) => {
+        // Max odometer from trips
+        const trips = await ctx.db.query("trips")
+            .withIndex("by_vehicleId", q => q.eq("vehicleId", args.vehicleId))
+            .collect();
+        const lastTripOdo = trips.reduce((max, t) => {
+            const odo = t.endOdometer ?? t.startOdometer ?? 0;
+            return Math.max(max, odo);
+        }, 0);
+
+        // Max odometer from fuel records
+        const fuelRecords = await ctx.db.query("fuelRecords")
+            .withIndex("by_vehicleId", q => q.eq("vehicleId", args.vehicleId))
+            .collect();
+        const lastFuelOdo = fuelRecords.reduce((max, r) => Math.max(max, r.currentOdometer), 0);
+
+        const lastOdo = Math.max(lastTripOdo, lastFuelOdo);
+        return lastOdo > 0 ? lastOdo : null;
     },
 });
 
@@ -108,6 +131,6 @@ export const update = mutation({
 export const remove = mutation({
     args: { id: v.id("vehicles") },
     handler: async (ctx, args) => {
-        await ctx.db.delete(args.id);
+        await ctx.db.patch(args.id, { deletedAt: Date.now() });
     },
 });

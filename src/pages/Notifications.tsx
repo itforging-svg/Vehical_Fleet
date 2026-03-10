@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "convex/react";
 import { useEffect } from "react";
 import { api } from "../../convex/_generated/api";
-import { Bell, CheckCircle, Clock, ShieldAlert, CheckCheck } from "lucide-react";
+import { Bell, Clock, ShieldAlert, CheckCheck, CheckCircle2, Truck, ShieldCheck, FileText, Activity } from "lucide-react";
 
 export default function NotificationPage() {
     const notifications = useQuery(api.notifications.list, {}) || [];
@@ -13,104 +13,176 @@ export default function NotificationPage() {
         syncExpiries();
     }, [syncExpiries]);
 
-    const formatDate = (timestamp: number) => {
-        return new Date(timestamp).toLocaleString('en-IN', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+    const unread = notifications.filter((n: any) => n.status === "unread");
+    const read = notifications.filter((n: any) => n.status !== "unread");
+
+    const formatDate = (timestamp: number) =>
+        new Date(timestamp).toLocaleString("en-IN", {
+            day: "2-digit", month: "short", year: "numeric",
+            hour: "2-digit", minute: "2-digit"
         });
+
+    const getTypeIcon = (type: string) => {
+        switch (type?.toLowerCase()) {
+            case "puc": return <Activity size={14} />;
+            case "insurance": return <ShieldCheck size={14} />;
+            case "rc": return <FileText size={14} />;
+            case "fitness": return <ShieldAlert size={14} />;
+            default: return <Truck size={14} />;
+        }
     };
 
-    return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Header / Actions */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center shadow-sm">
-                        <Bell size={24} />
+    const getTypeColor = (type: string) => {
+        switch (type?.toLowerCase()) {
+            case "puc": return "badge badge-orange";
+            case "insurance": return "badge badge-blue";
+            case "rc": return "badge badge-amber";
+            case "fitness": return "badge badge-red";
+            default: return "badge badge-slate";
+        }
+    };
+
+    const getStripColor = (item: any) => {
+        if (item.status === "unread") return "bg-red-400";
+        return "bg-slate-200";
+    };
+
+    const NotifCard = ({ item }: { item: any }) => (
+        <div className={`bg-white rounded-2xl border shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex ${item.status === "unread" ? "border-red-100" : "border-slate-100 opacity-70"
+            }`}>
+            {/* Left colour strip */}
+            <div className={`w-1 shrink-0 ${getStripColor(item)}`} />
+
+            {/* Card body */}
+            <div className="flex-1 px-5 py-4 min-w-0 space-y-2.5">
+                {/* TOP ROW: title + timestamp + dismiss */}
+                <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div className={`shrink-0 h-8 w-8 rounded-lg flex items-center justify-center ${item.status === "unread" ? "bg-red-50 text-red-500" : "bg-slate-50 text-slate-400"
+                            }`}>
+                            <ShieldAlert size={16} />
+                        </div>
+                        <div className="min-w-0">
+                            <h3 className={`text-sm font-black uppercase tracking-wide truncate ${item.status === "unread" ? "text-[#0e2a63]" : "text-slate-400"
+                                }`}>
+                                {item.title}
+                                {item.status === "unread" && (
+                                    <span className="inline-block ml-2 h-2 w-2 rounded-full bg-red-500 align-middle" />
+                                )}
+                            </h3>
+                            <p className={`text-xs leading-relaxed mt-0.5 ${item.status === "unread" ? "text-slate-600" : "text-slate-400 italic"
+                                }`}>
+                                {item.message}
+                            </p>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="text-2xl font-black text-[#0e2a63] uppercase tracking-tight italic">Expiry Alerts</h1>
-                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Compliance Monitoring System</p>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <span className="flex items-center gap-1 text-[10px] text-slate-400 font-semibold whitespace-nowrap">
+                            <Clock size={10} className="text-slate-300" />
+                            {formatDate(item.createdAt)}
+                        </span>
+                        {item.status === "unread" && (
+                            <button
+                                onClick={() => markAsRead({ id: item._id })}
+                                className="h-8 w-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-100 active:scale-95 transition-all shadow-sm"
+                                title="Mark as read"
+                            >
+                                <CheckCircle2 size={16} />
+                            </button>
+                        )}
                     </div>
                 </div>
 
-                <button
-                    onClick={() => markAllAsRead()}
-                    className="flex items-center gap-2 px-6 py-3.5 bg-white border border-slate-200 rounded-2xl text-xs font-black uppercase tracking-widest text-[#0e2a63] hover:bg-slate-50 transition-all shadow-sm group"
-                >
-                    <CheckCheck size={16} className="text-emerald-500 group-hover:scale-110 transition-transform" />
-                    Mark All as Read
-                </button>
+                {/* BOTTOM ROW: meta chips */}
+                <div className="border-t border-dashed border-slate-100 pt-2.5 flex items-center gap-2 flex-wrap">
+                    <span className="px-2.5 py-1 bg-[#0e2a63]/5 text-[#0e2a63] text-[10px] font-black rounded-lg border border-[#0e2a63]/10 flex items-center gap-1.5 whitespace-nowrap">
+                        <Truck size={10} />
+                        {item.registrationNumber}
+                    </span>
+                    <span className={`${getTypeColor(item.type)} flex items-center gap-1.5`}>
+                        {getTypeIcon(item.type)}
+                        {item.type?.toUpperCase() || "Alert"}
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
+
+    return (
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            {/* Page Header */}
+            <div className="page-header">
+                <div className="flex items-center gap-4">
+                    <div className="page-header-icon" style={{ background: "linear-gradient(135deg, #dc2626, #b91c1c)" }}>
+                        <Bell size={26} />
+                    </div>
+                    <div>
+                        <h1 className="page-title">Expiry Alerts</h1>
+                        <p className="page-subtitle">Compliance monitoring — PUC · Insurance · RC · Fitness</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    {unread.length > 0 && (
+                        <span className="badge badge-red animate-pulse">
+                            {unread.length} Unread
+                        </span>
+                    )}
+                    <button
+                        onClick={() => markAllAsRead()}
+                        className="btn-ghost"
+                    >
+                        <CheckCheck size={16} className="text-emerald-500" />
+                        Mark All Read
+                    </button>
+                </div>
             </div>
 
-            {/* Notifications List */}
-            <div className="bg-white rounded-[2rem] border border-slate-100 shadow-xl overflow-hidden min-h-[400px]">
-                {notifications.length > 0 ? (
-                    <div className="divide-y divide-slate-50">
-                        {notifications.map((item: any) => (
-                            <div
-                                key={item._id}
-                                className={`p-8 group hover:bg-slate-50/50 transition-all flex items-start gap-6 ${item.status === "unread" ? "bg-blue-50/20" : ""}`}
-                            >
-                                <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${item.status === "unread" ? "bg-red-50 text-red-600" : "bg-slate-50 text-slate-400"
-                                    }`}>
-                                    <ShieldAlert size={24} />
-                                </div>
-
-                                <div className="flex-1 space-y-1">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <h3 className={`text-sm font-black uppercase tracking-wide ${item.status === "unread" ? "text-[#0e2a63]" : "text-slate-400"}`}>
-                                                {item.title}
-                                            </h3>
-                                            {item.status === "unread" && (
-                                                <span className="flex h-2 w-2 rounded-full bg-red-500"></span>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-4">
-                                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
-                                                <Clock size={12} /> {formatDate(item.createdAt)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <p className={`text-xs leading-relaxed max-w-2xl ${item.status === "unread" ? "text-slate-600" : "text-slate-400 italic"}`}>
-                                        {item.message}
-                                    </p>
-                                    <div className="flex items-center gap-4 mt-3">
-                                        <span className="px-3 py-1 bg-[#0e2a63]/5 text-[#0e2a63] text-[10px] font-black rounded-lg uppercase tracking-widest">
-                                            Vehicle: {item.registrationNumber}
-                                        </span>
-                                        <span className="px-3 py-1 bg-orange-50 text-orange-600 text-[10px] font-black rounded-lg uppercase tracking-widest">
-                                            Type: {item.type}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {item.status === "unread" && (
-                                    <button
-                                        onClick={() => markAsRead({ id: item._id })}
-                                        className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-100 transition-colors opacity-0 group-hover:opacity-100 shadow-sm"
-                                        title="Dismiss Alert"
-                                    >
-                                        <CheckCircle size={20} />
-                                    </button>
-                                )}
+            {/* Notification Cards */}
+            {notifications.length > 0 ? (
+                <div className="space-y-4">
+                    {/* Unread section */}
+                    {unread.length > 0 && (
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                                <div className="h-px flex-1 bg-red-100" />
+                                <span className="text-[10px] text-red-400 font-black uppercase tracking-widest">
+                                    {unread.length} Active Alerts
+                                </span>
+                                <div className="h-px flex-1 bg-red-100" />
                             </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center justify-center py-24 text-center">
-                        <div className="h-20 w-20 bg-slate-50 rounded-full flex items-center justify-center text-slate-200 mb-6">
-                            <Bell size={40} />
+                            {unread.map((item: any) => (
+                                <NotifCard key={item._id} item={item} />
+                            ))}
                         </div>
-                        <h3 className="text-lg font-bold text-slate-400 uppercase tracking-widest italic leading-none">All Cleared</h3>
-                        <p className="text-slate-300 text-xs font-medium uppercase tracking-[0.2em] mt-3">No active document alerts at this time</p>
+                    )}
+
+                    {/* Read section */}
+                    {read.length > 0 && (
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                                <div className="h-px flex-1 bg-slate-100" />
+                                <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
+                                    {read.length} Dismissed
+                                </span>
+                                <div className="h-px flex-1 bg-slate-100" />
+                            </div>
+                            {read.map((item: any) => (
+                                <NotifCard key={item._id} item={item} />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            ) : (
+                <div className="section-card py-24 flex flex-col items-center justify-center text-center">
+                    <div className="h-20 w-20 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-300 mb-6">
+                        <Bell size={40} />
                     </div>
-                )}
-            </div>
+                    <h3 className="text-lg font-black text-slate-400 uppercase tracking-widest">All Cleared</h3>
+                    <p className="text-slate-300 text-xs font-medium uppercase tracking-[0.2em] mt-2">
+                        No active document alerts at this time
+                    </p>
+                </div>
+            )}
         </div>
     );
 }

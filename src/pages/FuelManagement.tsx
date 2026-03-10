@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Plus, Edit2, Trash2, Fuel, DollarSign, TrendingUp, Calendar, Search, XCircle, Save } from "lucide-react";
+import { useLastOdometer } from "../hooks/useLastOdometer";
 
 interface FuelManagementProps {
     plant?: string;
@@ -12,18 +13,13 @@ export default function FuelManagement({ plant }: FuelManagementProps) {
     const [editingRecord, setEditingRecord] = useState<any>(null);
     const [selectedVehicle, setSelectedVehicle] = useState<string>("");
     const [searchQuery, setSearchQuery] = useState("");
+    const [selectedMonth, setSelectedMonth] = useState("");
+    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
     // Queries
     const vehicles = useQuery(api.vehicles.list, { plant }) || [];
     const drivers = useQuery(api.drivers.list) || [];
     const fuelRecords = useQuery(api.fuelRecords.list, { plant }) || [];
-    const stats = useQuery(api.fuelRecords.getStats, { plant }) || {
-        totalCost: 0,
-        totalLiters: 0,
-        avgEfficiency: 0,
-        refuelsCount: 0,
-    };
-
     // Mutations
     const createRecord = useMutation(api.fuelRecords.create);
     const updateRecord = useMutation(api.fuelRecords.update);
@@ -36,8 +32,27 @@ export default function FuelManagement({ plant }: FuelManagementProps) {
             record.registrationNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
             record.driverName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             record.location?.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesVehicle && matchesSearch;
+
+        // Extent month filter matching
+        const recordDate = new Date(record.refuelDate);
+        const recordMonthStr = `${recordDate.getFullYear()}-${String(recordDate.getMonth() + 1).padStart(2, '0')}`;
+        const matchesMonth = !selectedMonth || recordMonthStr === selectedMonth;
+
+        return matchesVehicle && matchesSearch && matchesMonth;
     });
+
+    // Calculate dynamic stats based on filtered data (respects month, search, and vehicle filters)
+    const stats = {
+        totalCost: filteredRecords.reduce((sum: number, r: any) => sum + r.totalCost, 0),
+        totalLiters: filteredRecords.reduce((sum: number, r: any) => sum + r.quantity, 0),
+        refuelsCount: filteredRecords.length,
+        avgEfficiency: (() => {
+            const withEff = filteredRecords.filter((r: any) => r.fuelEfficiency !== undefined && r.fuelEfficiency !== null);
+            return withEff.length > 0
+                ? withEff.reduce((sum: number, r: any) => sum + (r.fuelEfficiency as number), 0) / withEff.length
+                : 0;
+        })()
+    };
 
     // Form state
     const [formData, setFormData] = useState({
@@ -54,6 +69,14 @@ export default function FuelManagement({ plant }: FuelManagementProps) {
         billNumber: "",
         remarks: "",
     });
+
+    // Auto-populate last odometer when vehicle is selected in add form
+    const lastOdoForForm = useLastOdometer(showAddModal ? formData.vehicleId || undefined : undefined);
+    useEffect(() => {
+        if (lastOdoForForm !== null && showAddModal) {
+            setFormData(prev => ({ ...prev, currentOdometer: String(lastOdoForForm) }));
+        }
+    }, [lastOdoForForm, showAddModal]);
 
     const resetForm = () => {
         setFormData({
@@ -141,13 +164,11 @@ export default function FuelManagement({ plant }: FuelManagementProps) {
     };
 
     const handleDelete = async (id: string) => {
-        if (confirm("Are you sure you want to delete this fuel record?")) {
-            try {
-                await deleteRecord({ id: id as any });
-                alert("Fuel record deleted successfully!");
-            } catch (error) {
-                alert("Failed to delete fuel record.");
-            }
+        try {
+            await deleteRecord({ id: id as any });
+            setConfirmDeleteId(null);
+        } catch (error) {
+            alert("Failed to delete fuel record.");
         }
     };
 
@@ -158,22 +179,25 @@ export default function FuelManagement({ plant }: FuelManagementProps) {
                 ...formData,
                 vehicleId,
                 registrationNumber: vehicle.registrationNumber,
+                fuelType: vehicle.fuelType || formData.fuelType,
             });
         }
     };
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-xl font-bold text-[#0e2a63]">Fuel Management</h2>
-                    <p className="text-sm text-slate-400 font-medium">Track fuel consumption and expenses across the fleet.</p>
+            {/* Page Header */}
+            <div className="page-header">
+                <div className="flex items-center gap-4">
+                    <div className="page-header-icon">
+                        <Fuel size={26} />
+                    </div>
+                    <div>
+                        <h1 className="page-title">Fuel Management</h1>
+                        <p className="page-subtitle">Track consumption, expenses and efficiency across the fleet</p>
+                    </div>
                 </div>
-                <button
-                    onClick={() => setShowAddModal(true)}
-                    className="px-6 py-3 bg-[#0e2a63] text-white rounded-2xl shadow-xl shadow-blue-900/20 hover:bg-black transition-all flex items-center gap-2 font-black uppercase tracking-widest text-[10px]"
-                >
+                <button onClick={() => setShowAddModal(true)} className="btn-navy">
                     <Plus size={16} />
                     Add Fuel Record
                 </button>
@@ -187,7 +211,7 @@ export default function FuelManagement({ plant }: FuelManagementProps) {
                             <DollarSign size={24} />
                         </div>
                         <div>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Total Cost (Month)</p>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Total Cost {selectedMonth ? `(${new Date(selectedMonth).toLocaleString('default', { month: 'short', year: 'numeric' })})` : "(All Time)"}</p>
                             <p className="text-2xl font-black text-slate-700">₹{stats.totalCost.toFixed(2)}</p>
                         </div>
                     </div>
@@ -223,7 +247,7 @@ export default function FuelManagement({ plant }: FuelManagementProps) {
                             <Calendar size={24} />
                         </div>
                         <div>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Refuels (Month)</p>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Refuels {selectedMonth ? `(${new Date(selectedMonth).toLocaleString('default', { month: 'short', year: 'numeric' })})` : "(All Time)"}</p>
                             <p className="text-2xl font-black text-slate-700">{stats.refuelsCount}</p>
                         </div>
                     </div>
@@ -232,7 +256,7 @@ export default function FuelManagement({ plant }: FuelManagementProps) {
 
             {/* Filters */}
             <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="relative">
                         <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
@@ -243,6 +267,13 @@ export default function FuelManagement({ plant }: FuelManagementProps) {
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
+
+                    <input
+                        type="month"
+                        className="px-4 py-3 w-full bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#0e2a63]/10 transition-all outline-none text-slate-600 font-medium"
+                        value={selectedMonth}
+                        onChange={(e) => setSelectedMonth(e.target.value)}
+                    />
 
                     <select
                         className="px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#0e2a63]/10 transition-all outline-none"
@@ -315,20 +346,36 @@ export default function FuelManagement({ plant }: FuelManagementProps) {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center justify-center gap-2">
-                                            <button
-                                                onClick={() => handleEdit(record)}
-                                                className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:text-[#0e2a63] transition-colors"
-                                                title="Edit"
-                                            >
-                                                <Edit2 size={14} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(record._id)}
-                                                className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:text-red-600 transition-colors"
-                                                title="Delete"
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
+                                            {confirmDeleteId === record._id ? (
+                                                <>
+                                                    <span className="text-[10px] text-red-500 font-black uppercase">Delete?</span>
+                                                    <button
+                                                        onClick={() => handleDelete(record._id)}
+                                                        className="px-2.5 py-1 bg-red-500 text-white text-[10px] font-black rounded-lg hover:bg-red-600 transition-colors"
+                                                    >Yes</button>
+                                                    <button
+                                                        onClick={() => setConfirmDeleteId(null)}
+                                                        className="px-2.5 py-1 bg-slate-100 text-slate-500 text-[10px] font-black rounded-lg hover:bg-slate-200 transition-colors"
+                                                    >No</button>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleEdit(record)}
+                                                        className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:text-[#0e2a63] transition-colors"
+                                                        title="Edit"
+                                                    >
+                                                        <Edit2 size={14} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setConfirmDeleteId(record._id)}
+                                                        className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:text-red-600 transition-colors"
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>
