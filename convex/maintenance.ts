@@ -87,6 +87,9 @@ export const create = mutation({
 export const update = mutation({
     args: {
         id: v.id("maintenanceRecords"),
+        vehicleId: v.optional(v.id("vehicles")),
+        registrationNumber: v.optional(v.string()),
+        plant: v.optional(v.string()),
         type: v.string(),
         status: v.string(),
         serviceDate: v.number(),
