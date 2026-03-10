@@ -97,7 +97,17 @@ export const create = mutation({
         if (existing) {
             throw new Error("Vehicle already exists");
         }
-        return await ctx.db.insert("vehicles", args);
+        const id = await ctx.db.insert("vehicles", args);
+        await ctx.db.insert("auditLogs", {
+            action: "CREATE",
+            module: "Vehicles",
+            recordId: id,
+            details: `Created vehicle: ${args.registrationNumber} (${args.model})`,
+            performedBy: args.addedBy ?? "Unknown Admin",
+            timestamp: Date.now(),
+            plant: args.locationPlant,
+        });
+        return id;
     },
 });
 
@@ -139,12 +149,34 @@ export const update = mutation({
     handler: async (ctx, args) => {
         const { id, ...data } = args;
         await ctx.db.patch(id, data);
+        await ctx.db.insert("auditLogs", {
+            action: "UPDATE",
+            module: "Vehicles",
+            recordId: id,
+            details: `Updated vehicle: ${data.registrationNumber}`,
+            performedBy: data.addedBy ?? "Unknown Admin",
+            timestamp: Date.now(),
+            plant: data.locationPlant,
+        });
     },
 });
 
 export const remove = mutation({
-    args: { id: v.id("vehicles") },
+    args: {
+        id: v.id("vehicles"),
+        performedBy: v.string(), // Added for auditing
+    },
     handler: async (ctx, args) => {
+        const vehicle = await ctx.db.get(args.id);
         await ctx.db.patch(args.id, { deletedAt: Date.now() });
+        await ctx.db.insert("auditLogs", {
+            action: "DELETE",
+            module: "Vehicles",
+            recordId: args.id,
+            details: `Deleted vehicle: ${vehicle?.registrationNumber || "Unknown"}`,
+            performedBy: args.performedBy,
+            timestamp: Date.now(),
+            plant: vehicle?.locationPlant,
+        });
     },
 });

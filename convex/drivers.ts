@@ -42,7 +42,17 @@ export const create = mutation({
         if (existing) {
             throw new Error("Driver with this license already exists");
         }
-        return await ctx.db.insert("drivers", args);
+        const id = await ctx.db.insert("drivers", args);
+        await ctx.db.insert("auditLogs", {
+            action: "CREATE",
+            module: "Drivers",
+            recordId: id,
+            details: `Created driver: ${args.name} (${args.driverId})`,
+            performedBy: args.addedBy ?? "Unknown Admin",
+            timestamp: Date.now(),
+            plant: args.plant,
+        });
+        return id;
     },
 });
 
@@ -73,13 +83,35 @@ export const update = mutation({
     handler: async (ctx, args) => {
         const { id, ...data } = args;
         await ctx.db.patch(id, data);
+        await ctx.db.insert("auditLogs", {
+            action: "UPDATE",
+            module: "Drivers",
+            recordId: id,
+            details: `Updated driver: ${data.name} (${data.driverId})`,
+            performedBy: data.addedBy ?? "Unknown Admin",
+            timestamp: Date.now(),
+            plant: data.plant,
+        });
     },
 });
 
 export const remove = mutation({
-    args: { id: v.id("drivers") },
+    args: {
+        id: v.id("drivers"),
+        performedBy: v.string(), // Added for auditing
+    },
     handler: async (ctx, args) => {
+        const driver = await ctx.db.get(args.id);
         await ctx.db.patch(args.id, { deletedAt: Date.now() });
+        await ctx.db.insert("auditLogs", {
+            action: "DELETE",
+            module: "Drivers",
+            recordId: args.id,
+            details: `Deleted driver: ${driver?.name || "Unknown"}`,
+            performedBy: args.performedBy,
+            timestamp: Date.now(),
+            plant: driver?.plant,
+        });
     },
 });
 

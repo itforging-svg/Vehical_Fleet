@@ -8,11 +8,11 @@ export const list = query({
         plant: v.optional(v.string())
     },
     handler: async (ctx, args) => {
-        const query = args.status
+        const requestQuery = args.status
             ? ctx.db.query("vehicleRequests").withIndex("by_status", (q) => q.eq("status", args.status as any))
             : ctx.db.query("vehicleRequests");
 
-        const results = await (query as any).order("desc").collect();
+        const results = await (requestQuery as any).order("desc").collect();
 
         if (args.plant) {
             return results.filter((r: any) => r.plant === args.plant);
@@ -36,16 +36,28 @@ export const createRequest = mutation({
         tripType: v.string(),
         vehicleType: v.string(),
         bookingDateTime: v.optional(v.string()),
+        performedBy: v.optional(v.string()), // Added for auditing
     },
     handler: async (ctx, args) => {
         // Generate Request ID: CSL-DD.MM.YY-NN (daily sequence)
+        const { performedBy, ...requestData } = args;
         const requestId = await generateCslId(ctx, "vehicleRequests");
 
         const id = await ctx.db.insert("vehicleRequests", {
-            ...args,
+            ...requestData,
             requestId,
             status: "pending",
             createdAt: Date.now(),
+        });
+
+        await ctx.db.insert("auditLogs", {
+            action: "CREATE",
+            module: "Vehicle Requests",
+            recordId: id,
+            details: `Created vehicle request: ${requestId} for ${args.requesterName}`,
+            performedBy: performedBy ?? args.requesterName,
+            timestamp: Date.now(),
+            plant: args.plant,
         });
 
         return { id, requestId };
@@ -59,18 +71,29 @@ export const updateStatus = mutation({
         vehicleId: v.optional(v.id("vehicles")),
         driverId: v.optional(v.id("drivers")),
         startOdometer: v.optional(v.number()),
+        performedBy: v.string(), // Added for auditing
     },
     handler: async (ctx, args) => {
-        const { id, status, vehicleId, driverId, startOdometer } = args;
+        const { id, status, vehicleId, driverId, startOdometer, performedBy } = args;
+        const req = await ctx.db.get(id);
         const patch: any = { status };
         if (vehicleId) patch.vehicleId = vehicleId;
         if (driverId) patch.driverId = driverId;
 
         await ctx.db.patch(id, patch);
 
+        await ctx.db.insert("auditLogs", {
+            action: "UPDATE",
+            module: "Vehicle Requests",
+            recordId: id,
+            details: `Request ${req?.requestId} status changed to ${status}`,
+            performedBy: performedBy,
+            timestamp: Date.now(),
+            plant: req?.plant,
+        });
+
         // If approved, we could also create a record in the 'trips' table
         if (status === "approved" && vehicleId && driverId) {
-            const req = await ctx.db.get(id);
             if (req) {
                 await ctx.db.insert("trips", {
                     vehicleId,
@@ -110,9 +133,21 @@ export const updateDetails = mutation({
             tripType: v.optional(v.string()),
             vehicleType: v.optional(v.string()),
             bookingDateTime: v.optional(v.string()),
-        })
+        }),
+        performedBy: v.string(), // Added for auditing
     },
     handler: async (ctx, args) => {
+        const req = await ctx.db.get(args.id);
         await ctx.db.patch(args.id, args.updates);
+
+        await ctx.db.insert("auditLogs", {
+            action: "UPDATE",
+            module: "Vehicle Requests",
+            recordId: args.id,
+            details: `Updated details for request ${req?.requestId}`,
+            performedBy: args.performedBy,
+            timestamp: Date.now(),
+            plant: req?.plant,
+        });
     },
 });

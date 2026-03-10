@@ -229,4 +229,3 @@ This document specifies the requirements for a Vehicle Fleet Management System d
 2. WHEN estimated distance is calculated, THE System SHALL compute estimated trip duration based on average speed
 3. WHEN displaying booking details, THE System SHALL show estimated return time based on outward time and trip duration
 4. WHEN actual trip data is available, THE System SHALL use historical data to improve future time estimates
-5. WHEN a user modifies locations, THE System SHALL recalculate estimated time automatically

@@ -80,7 +80,17 @@ export const create = mutation({
             await ctx.db.patch(args.vehicleId, { status: "Active" });
         }
 
-        return await ctx.db.insert("maintenanceRecords", args);
+        const id = await ctx.db.insert("maintenanceRecords", args);
+        await ctx.db.insert("auditLogs", {
+            action: "CREATE",
+            module: "Maintenance",
+            recordId: id,
+            details: `Created maintenance record for ${args.registrationNumber}: ${args.type} (${args.status})`,
+            performedBy: args.addedBy,
+            timestamp: Date.now(),
+            plant: args.plant,
+        });
+        return id;
     },
 });
 
@@ -100,30 +110,53 @@ export const update = mutation({
         billNumber: v.optional(v.string()),
         cost: v.number(),
         invoiceId: v.optional(v.id("_storage")),
+        performedBy: v.string(), // Added for auditing
     },
     handler: async (ctx, args) => {
-        const { id, ...data } = args;
+        const { id, performedBy, ...data } = args;
+        const record = await ctx.db.get(id);
+        if (!record) return;
 
         // Auto-update vehicle status based on maintenance status
-        if (args.status) {
-            const existingRecord = await ctx.db.get(id);
-            if (existingRecord) {
-                if (args.status === "In Progress") {
-                    await ctx.db.patch(existingRecord.vehicleId, { status: "In Maintenance" });
-                } else if (args.status === "Completed" || args.status === "Cancelled") {
-                    await ctx.db.patch(existingRecord.vehicleId, { status: "Active" });
-                }
+        if (data.status) {
+            if (data.status === "In Progress") {
+                await ctx.db.patch(record.vehicleId, { status: "In Maintenance" });
+            } else if (data.status === "Completed" || data.status === "Cancelled") {
+                await ctx.db.patch(record.vehicleId, { status: "Active" });
             }
         }
 
         await ctx.db.patch(id, data);
+
+        await ctx.db.insert("auditLogs", {
+            action: "UPDATE",
+            module: "Maintenance",
+            recordId: id,
+            details: `Updated maintenance record for ${record.registrationNumber}`,
+            performedBy: performedBy,
+            timestamp: Date.now(),
+            plant: record.plant,
+        });
     },
 });
 
-// Soft delete
 export const remove = mutation({
-    args: { id: v.id("maintenanceRecords") },
+    args: {
+        id: v.id("maintenanceRecords"),
+        performedBy: v.string(), // Added for auditing
+    },
     handler: async (ctx, args) => {
+        const record = await ctx.db.get(args.id);
         await ctx.db.patch(args.id, { deletedAt: Date.now() });
+
+        await ctx.db.insert("auditLogs", {
+            action: "DELETE",
+            module: "Maintenance",
+            recordId: args.id,
+            details: `Deleted maintenance record for ${record?.registrationNumber || "Unknown"}`,
+            performedBy: args.performedBy,
+            timestamp: Date.now(),
+            plant: record?.plant,
+        });
     },
 });

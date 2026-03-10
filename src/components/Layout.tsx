@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react";
 import { Menu, X, Bell, Home, Truck, Users, Activity, Settings, LogOut, Search, Map, CheckCircle2, Navigation, KeyRound, User, Fuel, PenTool, ExternalLink, FileBarChart, ClipboardList, LayoutDashboard, ChevronLeft, ChevronRight, Clock, Wifi } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -16,7 +17,8 @@ interface LayoutProps {
 
 const navItems = [
     { id: "dashboard", label: "Overview", icon: LayoutDashboard, path: "/dashboard" },
-    { id: "requests", label: "Vehicle Requests", icon: ClipboardList, path: "/requests" },
+    { id: "audit-logs", label: "Audit Logs", icon: ClipboardList, path: "/audit-logs" },
+    { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
     { id: "vehicles", label: "Fleet Management", icon: Truck, path: "/vehicles" },
     { id: "drivers", label: "Drivers", icon: Users, path: "/drivers" },
     { id: "driver-performance", label: "Driver Performance", icon: Activity, path: "/driver-performance" },

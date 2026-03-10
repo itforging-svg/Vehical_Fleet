@@ -24,11 +24,24 @@ export const createRequest = mutation({
         status: v.string(),
         notes: v.optional(v.string()),
         startOdometer: v.optional(v.number()),
+        performedBy: v.optional(v.string()), // Added for auditing
     },
     handler: async (ctx, args) => {
         // Generate unique CSL ID for internal movement
+        const { performedBy, ...tripData } = args;
         const requestId = await generateCslId(ctx, "trips");
-        return await ctx.db.insert("trips", { ...args, requestId });
+        const id = await ctx.db.insert("trips", { ...tripData, requestId });
+
+        await ctx.db.insert("auditLogs", {
+            action: "CREATE",
+            module: "Operational Logs",
+            recordId: id,
+            details: `Created trip request for ${args.requesterName}`,
+            performedBy: performedBy ?? "Unknown Admin",
+            timestamp: Date.now(),
+            plant: args.startLocation,
+        });
+        return id;
     },
 });
 
@@ -39,10 +52,22 @@ export const assignVehicle = mutation({
         driverId: v.id("drivers"),
         status: v.string(),
         startOdometer: v.optional(v.number()),
+        performedBy: v.string(), // Added for auditing
     },
     handler: async (ctx, args) => {
-        const { id, ...data } = args;
+        const { id, performedBy, ...data } = args;
+        const trip = await ctx.db.get(id);
         await ctx.db.patch(id, data);
+
+        await ctx.db.insert("auditLogs", {
+            action: "UPDATE",
+            module: "Operational Logs",
+            recordId: id,
+            details: `Assigned vehicle/driver to trip: ${trip?.requestId}`,
+            performedBy: performedBy,
+            timestamp: Date.now(),
+            plant: trip?.startLocation,
+        });
     },
 });
 
@@ -52,10 +77,22 @@ export const updateStatus = mutation({
         status: v.string(),
         endTime: v.optional(v.number()),
         endOdometer: v.optional(v.number()),
+        performedBy: v.string(), // Added for auditing
     },
     handler: async (ctx, args) => {
-        const { id, status, endTime, endOdometer } = args;
+        const { id, status, endTime, endOdometer, performedBy } = args;
+        const trip = await ctx.db.get(id);
         await ctx.db.patch(id, { status, endTime, endOdometer });
+
+        await ctx.db.insert("auditLogs", {
+            action: "UPDATE",
+            module: "Operational Logs",
+            recordId: id,
+            details: `Trip ${trip?.requestId} status changed to ${status}`,
+            performedBy: performedBy,
+            timestamp: Date.now(),
+            plant: trip?.startLocation,
+        });
 
         if (status === "Completed") {
             const trip = await ctx.db.get(id);
@@ -96,9 +133,21 @@ export const updateDetails = mutation({
             notes: v.optional(v.string()),
             startOdometer: v.optional(v.number()),
             endOdometer: v.optional(v.number()),
-        })
+        }),
+        performedBy: v.string(), // Added for auditing
     },
     handler: async (ctx, args) => {
+        const trip = await ctx.db.get(args.id);
         await ctx.db.patch(args.id, args.updates);
+
+        await ctx.db.insert("auditLogs", {
+            action: "UPDATE",
+            module: "Operational Logs",
+            recordId: args.id,
+            details: `Edited details for trip: ${trip?.requestId}`,
+            performedBy: args.performedBy,
+            timestamp: Date.now(),
+            plant: trip?.startLocation,
+        });
     },
 });

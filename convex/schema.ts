@@ -193,4 +193,16 @@ export default defineSchema({
     .index("by_vehicleId", ["vehicleId"])
     .index("by_plant", ["plant"])
     .index("by_serviceDate", ["serviceDate"]),
+
+  auditLogs: defineTable({
+    action: v.string(), // "CREATE", "UPDATE", "DELETE"
+    module: v.string(), // e.g., "Vehicles", "Drivers", "Trips", etc.
+    recordId: v.string(),
+    details: v.string(),
+    performedBy: v.string(), // Admin name or ID
+    timestamp: v.number(),
+    plant: v.optional(v.string()), // For filtering by plant
+  })
+    .index("by_module", ["module"])
+    .index("by_timestamp", ["timestamp"]),
 });

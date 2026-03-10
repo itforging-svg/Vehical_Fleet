@@ -119,6 +119,16 @@ export const create = mutation({
             ...rest,
         });
 
+        await ctx.db.insert("auditLogs", {
+            action: "CREATE",
+            module: "Fuel Records",
+            recordId: id,
+            details: `Added fuel record for ${args.registrationNumber}: ${quantity}L at ₹${totalCost}`,
+            performedBy: args.addedBy,
+            timestamp: Date.now(),
+            plant: args.plant,
+        });
+
         return id;
     },
 });
@@ -135,19 +145,19 @@ export const update = mutation({
         vendorName: v.optional(v.string()),
         billNumber: v.optional(v.string()),
         remarks: v.optional(v.string()),
+        performedBy: v.string(), // Added for auditing
     },
     handler: async (ctx, args) => {
-        const { id, ...updates } = args;
+        const { id, performedBy, ...updates } = args;
 
         const record = await ctx.db.get(id);
         if (!record) return;
 
-        let newQuantity = record.quantity;
+        let newQuantity = updates.quantity ?? record.quantity;
 
         // Recalculate total cost if price or quantity changed
         if (updates.pricePerLiter !== undefined || updates.quantity !== undefined) {
             const newPrice = updates.pricePerLiter ?? record.pricePerLiter;
-            newQuantity = updates.quantity ?? record.quantity;
             (updates as any).totalCost = newPrice * newQuantity;
         }
 
@@ -169,15 +179,23 @@ export const update = mutation({
 
         await ctx.db.patch(id, updates);
 
+        await ctx.db.insert("auditLogs", {
+            action: "UPDATE",
+            module: "Fuel Records",
+            recordId: id,
+            details: `Updated fuel record for ${record.registrationNumber}`,
+            performedBy: performedBy,
+            timestamp: Date.now(),
+            plant: record.plant,
+        });
+
         // If currentOdometer changed, update the subsequent record for this vehicle
-        // because its lastOdometer depends on this record's currentOdometer.
         if (updates.currentOdometer !== undefined) {
             const allVehicleRecords = await ctx.db
                 .query("fuelRecords")
                 .withIndex("by_vehicleId", q => q.eq("vehicleId", record.vehicleId))
                 .collect();
 
-            // Find the immediate next record in time
             const subsequentRecords = allVehicleRecords
                 .filter(r => r.refuelDate > record.refuelDate)
                 .sort((a, b) => a.refuelDate - b.refuelDate);
@@ -204,8 +222,20 @@ export const update = mutation({
 export const remove = mutation({
     args: {
         id: v.id("fuelRecords"),
+        performedBy: v.string(), // Added for auditing
     },
     handler: async (ctx, args) => {
+        const record = await ctx.db.get(args.id);
         await ctx.db.patch(args.id, { deletedAt: Date.now() });
+
+        await ctx.db.insert("auditLogs", {
+            action: "DELETE",
+            module: "Fuel Records",
+            recordId: args.id,
+            details: `Deleted fuel record for ${record?.registrationNumber || "Unknown"}`,
+            performedBy: args.performedBy,
+            timestamp: Date.now(),
+            plant: record?.plant,
+        });
     },
 });
