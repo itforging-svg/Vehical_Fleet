@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
-import { LayoutDashboard, Truck, Users, Map, Settings, LogOut, ChevronLeft, ChevronRight, Bell, ClipboardList, Fuel, Navigation } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { LayoutDashboard, Truck, Users, Map, LogOut, ChevronLeft, ChevronRight, Bell, ClipboardList, Fuel, Navigation, Wifi, Clock } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { useSessionTimeout } from "../hooks/useSessionTimeout";
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -26,23 +27,108 @@ const navItems = [
     { id: "notifications", label: "Notifications", icon: Bell, path: "/notifications" },
 ];
 
+const TIMEOUT_MINUTES = 10;
+
 export function Layout({ user, onLogout }: LayoutProps) {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
+    const [toast, setToast] = useState<string | null>(null);
+    const [timeoutWarning, setTimeoutWarning] = useState(false);
+    const [countdown, setCountdown] = useState(60); // 60-sec warning
+
     const unreadCount = useQuery(api.notifications.getUnreadCount, {}) || 0;
     const syncExpiries = useMutation(api.notifications.syncExpiries);
+    const requests = useQuery(api.requests.list, { plant: user?.plant }) || [];
     const navigate = useNavigate();
     const location = useLocation();
 
+    // Track previous request count to detect new incoming requests
+    const prevRequestCount = useRef<number | null>(null);
+
+    // ── Session timeout ───────────────────────────────────────────────
+    // Show a warning 1 minute before timeout
+    const WARNING_MS = (TIMEOUT_MINUTES - 1) * 60 * 1000;
+    const TIMEOUT_MS = TIMEOUT_MINUTES * 60 * 1000;
+
+    const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const logoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const resetTimers = () => {
+        // Clear existing timers
+        if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
+        if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
+        setTimeoutWarning(false);
+
+        // Set new timers
+        warningTimerRef.current = setTimeout(() => {
+            setTimeoutWarning(true);
+            setCountdown(60);
+        }, WARNING_MS);
+
+        logoutTimerRef.current = setTimeout(() => {
+            setTimeoutWarning(false);
+            onLogout();
+        }, TIMEOUT_MS);
+    };
+
+    // Track activity events to reset the timers
+    useEffect(() => {
+        const EVENTS = ["mousemove", "mousedown", "keydown", "touchstart", "scroll", "click"];
+        const handler = () => { resetTimers(); };
+        EVENTS.forEach(e => window.addEventListener(e, handler, { passive: true }));
+        resetTimers(); // start immediately
+
+        return () => {
+            EVENTS.forEach(e => window.removeEventListener(e, handler));
+            if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
+            if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
+        };
+    }, []);
+
+    // Countdown ticker when warning is visible
+    useEffect(() => {
+        if (!timeoutWarning) return;
+        setCountdown(60);
+        const interval = setInterval(() => {
+            setCountdown(c => {
+                if (c <= 1) { clearInterval(interval); return 0; }
+                return c - 1;
+            });
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [timeoutWarning]);
+
+    // ── New request toast ─────────────────────────────────────────────
+    useEffect(() => {
+        if (prevRequestCount.current === null) {
+            prevRequestCount.current = requests.length;
+            return;
+        }
+        const pending = requests.filter((r: any) => r.status === "pending").length;
+        const prevPending = prevRequestCount.current;
+        if (requests.length > prevRequestCount.current) {
+            const newCount = requests.length - prevRequestCount.current;
+            showToast(`🔔 ${newCount} new vehicle request${newCount > 1 ? "s" : ""}!`);
+        }
+        prevRequestCount.current = requests.length;
+    }, [requests.length]);
+
+    const showToast = (msg: string) => {
+        setToast(msg);
+        setTimeout(() => setToast(null), 4000);
+    };
+
+    // ── Init ──────────────────────────────────────────────────────────
     useEffect(() => {
         setIsVisible(true);
-        // Sync expiries on load
         syncExpiries();
     }, []);
 
-    // Filter nav items based on user role/id
+    // Filter nav items based on user role
     const filteredNavItems = navItems.filter(item => {
-        if (item.id === "notifications") return user?.adminId === "cslsuperadmin";
+        if (item.id === "notifications") {
+            return user?.adminId === "cslsuperadmin" || user?.adminId === "masteradmin";
+        }
         return true;
     });
 
@@ -50,6 +136,47 @@ export function Layout({ user, onLogout }: LayoutProps) {
 
     return (
         <div className="flex h-screen w-full bg-slate-50 text-slate-800 font-sans overflow-hidden">
+
+            {/* ── Session timeout warning overlay ── */}
+            {timeoutWarning && (
+                <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-300">
+                    <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full mx-4 text-center space-y-5">
+                        <div className="h-16 w-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto">
+                            <Clock size={32} className="text-[#f39c12]" />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-black text-[#0e2a63]">Session Expiring</h3>
+                            <p className="text-sm text-slate-500 mt-2">
+                                You've been inactive. Auto-logout in
+                            </p>
+                            <p className="text-5xl font-black text-[#f39c12] mt-3 tabular-nums">{countdown}s</p>
+                        </div>
+                        <button
+                            onClick={() => { setTimeoutWarning(false); resetTimers(); }}
+                            className="w-full btn-primary justify-center"
+                        >
+                            Stay Logged In
+                        </button>
+                        <button
+                            onClick={onLogout}
+                            className="w-full btn-ghost justify-center text-red-500 hover:text-red-600"
+                        >
+                            Logout Now
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* ── New request toast ── */}
+            {toast && (
+                <div className="fixed top-6 right-6 z-[9998] animate-in slide-in-from-top-2 fade-in duration-300">
+                    <div className="bg-[#0e2a63] text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-sm font-bold">
+                        <Bell size={16} className="text-[#f39c12] shrink-0 animate-bounce" />
+                        {toast}
+                    </div>
+                </div>
+            )}
+
             {/* Sidebar */}
             <aside className={cn(
                 "bg-[#0e2a63] text-white flex flex-col transition-all duration-300 relative z-20 shadow-2xl",
@@ -92,6 +219,14 @@ export function Layout({ user, onLogout }: LayoutProps) {
                                     {unreadCount}
                                 </span>
                             )}
+                            {item.id === "requests" && requests.filter((r: any) => r.status === "pending").length > 0 && (
+                                <span className={cn(
+                                    "absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-400 text-[10px] font-black text-white shadow-lg",
+                                    !isCollapsed && "relative top-0 right-0 ml-auto"
+                                )}>
+                                    {requests.filter((r: any) => r.status === "pending").length}
+                                </span>
+                            )}
                             {isCollapsed && (
                                 <div className="absolute left-full ml-4 px-3 py-1 bg-slate-900 text-white text-xs font-bold rounded opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
                                     {item.label}
@@ -100,6 +235,18 @@ export function Layout({ user, onLogout }: LayoutProps) {
                         </button>
                     ))}
                 </nav>
+
+                {/* Session timer indicator */}
+                {!isCollapsed && (
+                    <div className="px-4 pb-2">
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10">
+                            <Clock size={12} className="text-blue-300 shrink-0" />
+                            <span className="text-[10px] text-blue-200/60 font-bold uppercase tracking-wider">
+                                Auto-logout: {TIMEOUT_MINUTES}min idle
+                            </span>
+                        </div>
+                    </div>
+                )}
 
                 <div className="p-3 border-t border-white/10">
                     <button
@@ -141,6 +288,12 @@ export function Layout({ user, onLogout }: LayoutProps) {
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
+                        {/* Live indicator */}
+                        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-100 rounded-2xl">
+                            <Wifi size={12} className="text-emerald-500" />
+                            <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Live</span>
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        </div>
                         <div className="flex flex-col items-end text-right hidden sm:flex">
                             <span className="text-sm font-bold text-[#0e2a63]">{user?.name || "Admin"}</span>
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{user?.plant || "Main Gate Terminal Master Controller"}</span>
