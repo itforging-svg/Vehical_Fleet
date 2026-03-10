@@ -72,6 +72,13 @@ export const create = mutation({
         addedBy: v.string(),
     },
     handler: async (ctx, args) => {
+        // Auto-update vehicle status
+        if (args.status === "In Progress") {
+            await ctx.db.patch(args.vehicleId, { status: "In Maintenance" });
+        } else if (args.status === "Completed") {
+            await ctx.db.patch(args.vehicleId, { status: "Active" });
+        }
+
         return await ctx.db.insert("maintenanceRecords", args);
     },
 });
@@ -91,6 +98,19 @@ export const update = mutation({
     },
     handler: async (ctx, args) => {
         const { id, ...data } = args;
+
+        // Auto-update vehicle status based on maintenance status
+        if (args.status) {
+            const existingRecord = await ctx.db.get(id);
+            if (existingRecord) {
+                if (args.status === "In Progress") {
+                    await ctx.db.patch(existingRecord.vehicleId, { status: "In Maintenance" });
+                } else if (args.status === "Completed" || args.status === "Cancelled") {
+                    await ctx.db.patch(existingRecord.vehicleId, { status: "Active" });
+                }
+            }
+        }
+
         await ctx.db.patch(id, data);
     },
 });
