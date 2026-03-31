@@ -240,6 +240,6 @@ Vehical_Fleet/
 ```
 
 ---
-
-**Proprietary**
+**
 Proprietary for Chandan Steel Ltd. Developed by Atharv Dhapre ( IT Dept ).
+**
