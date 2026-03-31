@@ -241,4 +241,5 @@ Vehical_Fleet/
 
 ---
 
-© 2026 **Chandan Steel Ltd.** All rights reserved.
+**Proprietary**
+Proprietary for Chandan Steel Ltd. Developed by Atharv Dhapre ( IT Dept ).
