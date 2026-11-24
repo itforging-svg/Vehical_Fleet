@@ -1,17 +1,19 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Bell, Truck, Users, Activity, Settings, LogOut, Map, Navigation, Fuel, PenTool, FileBarChart, ClipboardList, LayoutDashboard, ChevronLeft, ChevronRight, Clock, Wifi } from "lucide-react";
-import { useQuery, useMutation } from "convex/react";
+import { useAdminQuery as useQuery, useAdminMutation as useMutation } from "../hooks/adminConvex";
 import { api } from "../../convex/_generated/api";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import type { AdminUser } from "../types";
+import type { Doc } from "../../convex/_generated/dataModel";
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
 interface LayoutProps {
-    user?: any;
+    user?: AdminUser;
     onLogout: () => void;
 }
 
@@ -40,9 +42,10 @@ export function Layout({ user, onLogout }: LayoutProps) {
     const [timeoutWarning, setTimeoutWarning] = useState(false);
     const [countdown, setCountdown] = useState(60); // 60-sec warning
 
-    const unreadCount = useQuery(api.notifications.getUnreadCount, {}) || 0;
+    const isSuperAdmin = user?.adminId === "cslsuperadmin" || user?.adminId === "masteradmin";
+    const unreadCount = useQuery(api.notifications.getUnreadCount, isSuperAdmin ? {} : "skip") || 0;
     const syncExpiries = useMutation(api.notifications.syncExpiries);
-    const requests = useQuery(api.requests.list, { plant: user?.plant }) || [];
+    const requests = (useQuery(api.requests.list, { plant: user?.plant }) || []) as Doc<"vehicleRequests">[];
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -57,7 +60,7 @@ export function Layout({ user, onLogout }: LayoutProps) {
     const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const logoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const resetTimers = () => {
+    const resetTimers = useCallback(() => {
         // Clear existing timers
         if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
         if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
@@ -73,26 +76,26 @@ export function Layout({ user, onLogout }: LayoutProps) {
             setTimeoutWarning(false);
             onLogout();
         }, TIMEOUT_MS);
-    };
+    }, [onLogout, WARNING_MS, TIMEOUT_MS]);
 
     // Track activity events to reset the timers
     useEffect(() => {
         const EVENTS = ["mousemove", "mousedown", "keydown", "touchstart", "scroll", "click"];
         const handler = () => { resetTimers(); };
         EVENTS.forEach(e => window.addEventListener(e, handler, { passive: true }));
-        resetTimers(); // start immediately
+        const startupTimer = window.setTimeout(resetTimers, 0);
 
         return () => {
             EVENTS.forEach(e => window.removeEventListener(e, handler));
+            clearTimeout(startupTimer);
             if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
             if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
         };
-    }, []);
+    }, [resetTimers]);
 
     // Countdown ticker when warning is visible
     useEffect(() => {
         if (!timeoutWarning) return;
-        setCountdown(60);
         const interval = setInterval(() => {
             setCountdown(c => {
                 if (c <= 1) { clearInterval(interval); return 0; }
@@ -101,6 +104,11 @@ export function Layout({ user, onLogout }: LayoutProps) {
         }, 1000);
         return () => clearInterval(interval);
     }, [timeoutWarning]);
+
+    const showToast = useCallback((msg: string) => {
+        setToast(msg);
+        setTimeout(() => setToast(null), 4000);
+    }, []);
 
     // ── New request toast ─────────────────────────────────────────────
     useEffect(() => {
@@ -113,23 +121,19 @@ export function Layout({ user, onLogout }: LayoutProps) {
             showToast(`🔔 ${newCount} new vehicle request${newCount > 1 ? "s" : ""}!`);
         }
         prevRequestCount.current = requests.length;
-    }, [requests.length]);
-
-    const showToast = (msg: string) => {
-        setToast(msg);
-        setTimeout(() => setToast(null), 4000);
-    };
+    }, [requests.length, showToast]);
 
     // ── Init ──────────────────────────────────────────────────────────
     useEffect(() => {
-        setIsVisible(true);
-        syncExpiries();
-    }, []);
+        const frame = window.requestAnimationFrame(() => setIsVisible(true));
+        if (isSuperAdmin) syncExpiries({});
+        return () => window.cancelAnimationFrame(frame);
+    }, [isSuperAdmin, syncExpiries]);
 
     // Filter nav items based on user role
     const filteredNavItems = navItems.filter(item => {
         if (item.id === "notifications" || item.id === "maintenance") {
-            return user?.adminId === "cslsuperadmin" || user?.adminId === "masteradmin";
+            return isSuperAdmin;
         }
         return true;
     });
@@ -186,7 +190,7 @@ export function Layout({ user, onLogout }: LayoutProps) {
             )}>
                 <div className="p-6 flex items-center gap-4 border-b border-white/10 shrink-0">
                     <div className="bg-white p-1.5 rounded-lg shrink-0">
-                        <img src="https://www.chandansteel.net/images/logo-floated.png" alt="Logo" className="h-6 w-6 object-contain" />
+                        <span className="h-6 w-8 flex items-center justify-center text-[10px] font-black text-[#0e2a63]" aria-label="Chandan Steel">CSL</span>
                     </div>
                     {!isCollapsed && (
                         <div className="flex flex-col animate-in fade-in duration-500">

@@ -1,12 +1,13 @@
-import { mutation, query } from "./_generated/server";
+import { adminMutation as mutation, adminQuery as query, assertPlantAccess } from "./functions";
 import { v } from "convex/values";
 
 export const list = query({
     args: { plant: v.optional(v.string()) },
     handler: async (ctx, args) => {
         const vehicles = (await ctx.db.query("vehicles").collect()).filter(v => v.deletedAt === undefined);
-        if (args.plant) {
-            return vehicles.filter(v => v.locationPlant === args.plant);
+        const plant = ctx.admin.plant ?? args.plant;
+        if (plant) {
+            return vehicles.filter(v => v.locationPlant === plant);
         }
         return vehicles;
     },
@@ -15,6 +16,8 @@ export const list = query({
 export const getLastOdometer = query({
     args: { vehicleId: v.id("vehicles") },
     handler: async (ctx, args) => {
+        const vehicle = await ctx.db.get(args.vehicleId);
+        if (!vehicle || (ctx.admin.plant && vehicle.locationPlant !== ctx.admin.plant)) return null;
         // Max odometer from trips
         const trips = await ctx.db.query("trips")
             .withIndex("by_vehicleId", q => q.eq("vehicleId", args.vehicleId))
@@ -44,12 +47,14 @@ export const getLastOdometer = query({
 export const getByRegNo = query({
     args: { registrationNumber: v.string() },
     handler: async (ctx, args) => {
-        return await ctx.db
+        const vehicle = await ctx.db
             .query("vehicles")
             .withIndex("by_registrationNumber", (q) =>
                 q.eq("registrationNumber", args.registrationNumber)
             )
             .unique();
+        if (vehicle && ctx.admin.plant && vehicle.locationPlant !== ctx.admin.plant) return null;
+        return vehicle;
     },
 });
 
@@ -88,6 +93,7 @@ export const create = mutation({
         pucId: v.optional(v.id("_storage")),
     },
     handler: async (ctx, args) => {
+        assertPlantAccess(ctx.admin.plant, args.locationPlant);
         const existing = await ctx.db
             .query("vehicles")
             .withIndex("by_registrationNumber", (q) =>
@@ -148,6 +154,10 @@ export const update = mutation({
         performedBy: v.string(), // Added for auditing
     },
     handler: async (ctx, args) => {
+        const current = await ctx.db.get(args.id);
+        if (!current) throw new Error("Vehicle not found");
+        assertPlantAccess(ctx.admin.plant, current.locationPlant);
+        assertPlantAccess(ctx.admin.plant, args.locationPlant ?? current.locationPlant);
         const { id, performedBy, ...data } = args;
         await ctx.db.patch(id, data);
         await ctx.db.insert("auditLogs", {
@@ -169,6 +179,8 @@ export const remove = mutation({
     },
     handler: async (ctx, args) => {
         const vehicle = await ctx.db.get(args.id);
+        if (!vehicle) throw new Error("Vehicle not found");
+        assertPlantAccess(ctx.admin.plant, vehicle.locationPlant);
         await ctx.db.patch(args.id, { deletedAt: Date.now() });
         await ctx.db.insert("auditLogs", {
             action: "DELETE",

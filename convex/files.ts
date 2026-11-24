@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { adminMutation as mutation, adminQuery as query } from "./functions";
 
 // Generate a short-lived upload URL for the frontend
 export const generateUploadUrl = mutation({

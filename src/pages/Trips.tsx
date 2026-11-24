@@ -1,9 +1,10 @@
-import { useQuery, useMutation } from "convex/react";
+import { useAdminQuery as useQuery, useAdminMutation as useMutation } from "../hooks/adminConvex";
 import { api } from "../../convex/_generated/api";
+import type { AdminUser } from "../types";
 import { Map, Clock, ArrowRight, CheckCircle2, Search, XCircle, Edit2, Save } from "lucide-react";
 import { useState } from "react";
 
-export default function Trips({ user }: { user?: any }) {
+export default function Trips({ user }: { user?: AdminUser }) {
     const plant = user?.plant;
     const requests = useQuery(api.requests.list, { plant }) || [];
     const trips = useQuery(api.trips.list, { plant }) || [];
@@ -51,10 +52,12 @@ export default function Trips({ user }: { user?: any }) {
             alert("End odometer cannot be less than start odometer."); return;
         }
         try {
+            // This timestamp is created after the user's completion action, not during render.
+            const endTime = Date.now(); // eslint-disable-line react-hooks/purity
             await updateTripStatus({
                 id: completingTripId as any,
                 status: "Completed",
-                endTime: Date.now(),
+                endTime,
                 endOdometer: endOdo,
                 performedBy: user?.name || "Unknown Admin"
             });

@@ -1,13 +1,14 @@
-import { useQuery, useMutation } from "convex/react";
+import { useAdminQuery as useQuery, useAdminMutation as useMutation } from "../hooks/adminConvex";
 import { api } from "../../convex/_generated/api";
+import type { AdminUser } from "../types";
 import { Navigation, Clock, ArrowRight, Edit2, Save, XCircle, Search, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 
-export default function InternalMovementLogs({ user }: { user?: any }) {
+export default function InternalMovementLogs({ user }: { user?: AdminUser }) {
     const plant = user?.plant;
     const trips = useQuery(api.trips.list, { plant }) || [];
     const vehicles = useQuery(api.vehicles.list, {}) || [];
-    const drivers = useQuery(api.drivers.list) || [];
+    const drivers = useQuery(api.drivers.list, {}) || [];
     const updateTripDetails = useMutation(api.trips.updateDetails);
     const updateTripStatus = useMutation(api.trips.updateStatus);
 
@@ -43,7 +44,9 @@ export default function InternalMovementLogs({ user }: { user?: any }) {
             alert("End odometer cannot be less than start odometer."); return;
         }
         try {
-            await updateTripStatus({ id: completingTripId as any, status: "Completed", endTime: Date.now(), endOdometer: endOdo, performedBy: user?.name || "Unknown Admin" });
+            // This timestamp is created after the user's completion action, not during render.
+            const endTime = Date.now(); // eslint-disable-line react-hooks/purity
+            await updateTripStatus({ id: completingTripId as any, status: "Completed", endTime, endOdometer: endOdo, performedBy: user?.name || "Unknown Admin" });
             setCompletingTripId(null); setEndOdometer("");
         } catch { alert("Failed to complete trip."); }
     };

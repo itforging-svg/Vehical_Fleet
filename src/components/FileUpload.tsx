@@ -1,5 +1,5 @@
 import { useState, useRef, useId } from "react";
-import { useMutation, useQuery } from "convex/react";
+import { useAdminMutation as useMutation, useAdminQuery as useQuery } from "../hooks/adminConvex";
 import { api } from "../../convex/_generated/api";
 import { UploadCloud, X, Loader2, CheckCircle2, Eye } from "lucide-react";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -43,7 +43,7 @@ export default function FileUpload({
             setIsUploading(true);
 
             // 1. Get a short-lived upload URL from Convex
-            const postUrl = await generateUploadUrl();
+            const postUrl = await generateUploadUrl({});
 
             // 2. POST the file to the URL
             const result = await fetch(postUrl, {

@@ -1,8 +1,9 @@
-import { mutation, query } from "./_generated/server";
+import { mutation } from "./_generated/server";
+import { adminMutation, adminQuery, assertPlantAccess } from "./functions";
 import { v } from "convex/values";
 import { generateCslId } from "./idHelper";
 
-export const list = query({
+export const list = adminQuery({
     args: {
         status: v.optional(v.string()),
         plant: v.optional(v.string())
@@ -14,8 +15,9 @@ export const list = query({
 
         const results = await (requestQuery as any).order("desc").collect();
 
-        if (args.plant) {
-            return results.filter((r: any) => r.plant === args.plant);
+        const plant = ctx.admin.plant ?? args.plant;
+        if (plant) {
+            return results.filter((r: any) => r.plant === plant);
         }
 
         return results;
@@ -64,7 +66,7 @@ export const createRequest = mutation({
     },
 });
 
-export const updateStatus = mutation({
+export const updateStatus = adminMutation({
     args: {
         id: v.id("vehicleRequests"),
         status: v.string(),
@@ -76,9 +78,19 @@ export const updateStatus = mutation({
     handler: async (ctx, args) => {
         const { id, status, vehicleId, driverId, startOdometer, performedBy } = args;
         const req = await ctx.db.get(id);
+        if (!req) throw new Error("Request not found");
+        assertPlantAccess(ctx.admin.plant, req.plant);
         const patch: any = { status };
         if (vehicleId) patch.vehicleId = vehicleId;
         if (driverId) patch.driverId = driverId;
+        if (vehicleId) {
+            const vehicle = await ctx.db.get(vehicleId);
+            assertPlantAccess(ctx.admin.plant, vehicle?.locationPlant);
+        }
+        if (driverId) {
+            const driver = await ctx.db.get(driverId);
+            assertPlantAccess(ctx.admin.plant, driver?.plant);
+        }
 
         await ctx.db.patch(id, patch);
 
@@ -117,7 +129,7 @@ export const updateStatus = mutation({
     },
 });
 
-export const updateDetails = mutation({
+export const updateDetails = adminMutation({
     args: {
         id: v.id("vehicleRequests"),
         updates: v.object({
@@ -138,6 +150,9 @@ export const updateDetails = mutation({
     },
     handler: async (ctx, args) => {
         const req = await ctx.db.get(args.id);
+        if (!req) throw new Error("Request not found");
+        assertPlantAccess(ctx.admin.plant, req.plant);
+        assertPlantAccess(ctx.admin.plant, args.updates.plant ?? req.plant);
         await ctx.db.patch(args.id, args.updates);
 
         await ctx.db.insert("auditLogs", {

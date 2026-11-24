@@ -1,6 +1,6 @@
-import { mutation } from "./_generated/server";
+import { internalMutation } from "./_generated/server";
 
-export const migratePlantNames = mutation({
+export const migratePlantNames = internalMutation({
     args: {},
     handler: async (ctx) => {
         // 1. Update Vehicles

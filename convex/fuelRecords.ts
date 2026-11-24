@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { adminMutation as mutation, adminQuery as query, assertPlantAccess } from "./functions";
 
 // List all fuel records with optional filters
 export const list = query({
@@ -11,8 +11,9 @@ export const list = query({
         let records = (await ctx.db.query("fuelRecords").collect()).filter(r => r.deletedAt === undefined);
 
         // Filter by plant if provided
-        if (args.plant) {
-            records = records.filter(r => r.plant === args.plant);
+        const plant = ctx.admin.plant ?? args.plant;
+        if (plant) {
+            records = records.filter(r => r.plant === plant);
         }
 
         // Filter by vehicle if provided
@@ -34,8 +35,9 @@ export const getStats = query({
         let records = (await ctx.db.query("fuelRecords").collect()).filter(r => r.deletedAt === undefined);
 
         // Filter by plant if provided
-        if (args.plant) {
-            records = records.filter(r => r.plant === args.plant);
+        const plant = ctx.admin.plant ?? args.plant;
+        if (plant) {
+            records = records.filter(r => r.plant === plant);
         }
 
         // Calculate current month records
@@ -81,6 +83,13 @@ export const create = mutation({
         remarks: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        assertPlantAccess(ctx.admin.plant, args.plant);
+        const vehicle = await ctx.db.get(args.vehicleId);
+        assertPlantAccess(ctx.admin.plant, vehicle?.locationPlant);
+        if (args.driverId) {
+            const driver = await ctx.db.get(args.driverId);
+            assertPlantAccess(ctx.admin.plant, driver?.plant);
+        }
         const { vehicleId, currentOdometer, quantity, ...rest } = args;
 
         // Get the last fuel record for this vehicle to calculate efficiency
@@ -152,8 +161,9 @@ export const update = mutation({
 
         const record = await ctx.db.get(id);
         if (!record) return;
+        assertPlantAccess(ctx.admin.plant, record.plant);
 
-        let newQuantity = updates.quantity ?? record.quantity;
+        const newQuantity = updates.quantity ?? record.quantity;
 
         // Recalculate total cost if price or quantity changed
         if (updates.pricePerLiter !== undefined || updates.quantity !== undefined) {
@@ -226,6 +236,8 @@ export const remove = mutation({
     },
     handler: async (ctx, args) => {
         const record = await ctx.db.get(args.id);
+        if (!record) throw new Error("Fuel record not found");
+        assertPlantAccess(ctx.admin.plant, record.plant);
         await ctx.db.patch(args.id, { deletedAt: Date.now() });
 
         await ctx.db.insert("auditLogs", {

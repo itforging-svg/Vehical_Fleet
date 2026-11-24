@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useMutation } from "convex/react";
+import { api } from "../convex/_generated/api";
 import LandingPage from "./pages/LandingPage";
 import RequestVehicle from "./pages/RequestVehicle";
 import InternalMovement from "./pages/InternalMovement";
@@ -19,19 +21,27 @@ import InternalMovementLogs from "./pages/InternalMovementLogs";
 import Maintenance from "./pages/Maintenance";
 import Reports from "./pages/Reports";
 import ProtectedRoute from "./components/ProtectedRoute";
+import type { AdminUser } from "./types";
+import { clearAuthSession, getSessionToken, readAuthSession, saveAuthSession } from "./authSession";
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [initialSession] = useState(readAuthSession);
+  const [isAuthenticated, setIsAuthenticated] = useState(Boolean(initialSession));
+  const [user, setUser] = useState<AdminUser | undefined>(initialSession?.user);
+  const logoutMutation = useMutation(api.auth.logout);
 
-  const handleLogin = (userData: any) => {
+  const handleLogin = (userData: AdminUser, token: string, expiresAt: number) => {
+    saveAuthSession({ user: userData, token, expiresAt });
     setIsAuthenticated(true);
     setUser(userData);
   };
 
   const handleLogout = () => {
+    const token = getSessionToken();
+    if (token) void logoutMutation({ sessionToken: token }).catch(() => undefined);
+    clearAuthSession();
     setIsAuthenticated(false);
-    setUser(null);
+    setUser(undefined);
   };
 
   return (
@@ -42,10 +52,10 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
           <Route path="/request-vehicle" element={<RequestVehicle />} />
-          <Route path="/internal-movement" element={<InternalMovement />} />
 
           {/* Protected Admin Routes */}
           <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
+            <Route path="/internal-movement" element={<InternalMovement />} />
             <Route element={<Layout user={user} onLogout={handleLogout} />}>
               <Route path="/dashboard" element={<Dashboard user={user} />} />
               <Route path="/requests" element={<Requests user={user} />} />
@@ -56,9 +66,9 @@ function App() {
               <Route path="/trips" element={<Trips user={user} />} />
               <Route path="/internal-logs" element={<InternalMovementLogs user={user} />} />
               <Route path="/fuel" element={<FuelManagement user={user} />} />
-              <Route path="/maintenance" element={<Maintenance user={user} />} />
+              <Route path="/maintenance" element={user?.adminId === "cslsuperadmin" || user?.adminId === "masteradmin" ? <Maintenance user={user} /> : <Navigate to="/dashboard" replace />} />
               <Route path="/reports" element={<Reports user={user} />} />
-              <Route path="/notifications" element={<NotificationPage />} />
+              <Route path="/notifications" element={user?.adminId === "cslsuperadmin" || user?.adminId === "masteradmin" ? <NotificationPage /> : <Navigate to="/dashboard" replace />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
           </Route>

@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { adminMutation as mutation, adminQuery as query } from "./functions";
 
 export const list = query({
     args: {
@@ -13,8 +13,9 @@ export const list = query({
             .order("desc")
             .collect();
 
-        if (args.plant) {
-            logs = logs.filter((log) => !log.plant || log.plant === args.plant);
+        const plant = ctx.admin.plant ?? args.plant;
+        if (plant) {
+            logs = logs.filter((log) => log.plant === plant);
         }
         if (args.module) {
             logs = logs.filter((log) => log.module === args.module);

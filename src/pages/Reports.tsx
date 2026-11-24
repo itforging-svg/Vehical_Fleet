@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useQuery } from "convex/react";
+import { useAdminQuery as useQuery } from "../hooks/adminConvex";
 import { api } from "../../convex/_generated/api";
+import type { AdminUser } from "../types";
 import { FileBarChart, Download, FileText, Calendar, Filter, FileSpreadsheet, AlertCircle, Map as MapIcon } from "lucide-react";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -9,7 +10,7 @@ import autoTable from "jspdf-autotable";
 
 type ModuleType = "trips" | "fuel" | "maintenance" | "requests";
 
-export default function Reports({ user }: { user?: any }) {
+export default function Reports({ user }: { user?: AdminUser }) {
     const plant = user?.plant;
     const [selectedModule, setSelectedModule] = useState<ModuleType>("trips");
     const [startDate, setStartDate] = useState(() => {

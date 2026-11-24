@@ -38,7 +38,7 @@ export default function RequestVehicle() {
         try {
             const result = await createRequest({ ...formData, performedBy: "Guest User" });
             setSubmittedId(result.requestId);
-        } catch (error) {
+        } catch {
             alert("Failed to submit request. Please try again.");
         } finally {
             setIsSubmitting(false);

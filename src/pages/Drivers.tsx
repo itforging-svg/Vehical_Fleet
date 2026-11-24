@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useAdminQuery as useQuery, useAdminMutation as useMutation } from "../hooks/adminConvex";
 import { api } from "../../convex/_generated/api";
+import type { AdminUser } from "../types";
 import { Plus, Search, Filter, X, Save, Trash2, Edit2, ShieldCheck, FileText, ClipboardList, UserCheck, Droplets } from "lucide-react";
 import type { Id } from "../../convex/_generated/dataModel";
 import FileUpload from "../components/FileUpload";
@@ -30,7 +31,7 @@ interface Driver {
     aadharId?: Id<"_storage">;
 }
 
-export default function Drivers({ user }: { user?: any }) {
+export default function Drivers({ user }: { user?: AdminUser }) {
     const drivers = useQuery(api.drivers.list, {}) || [];
     const createDriver = useMutation(api.drivers.create);
     const updateDriver = useMutation(api.drivers.update);
@@ -151,7 +152,7 @@ export default function Drivers({ user }: { user?: any }) {
         if (window.confirm(`Are you sure you want to delete driver ${name}?`)) {
             try {
                 await removeDriver({ id: id as any, performedBy: user?.name || "Unknown Admin" });
-            } catch (error) {
+            } catch {
                 alert("Failed to delete driver.");
             }
         }

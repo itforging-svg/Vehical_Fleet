@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useQuery } from "convex/react";
+import { useAdminQuery as useQuery } from "../hooks/adminConvex";
 import { api } from "../../convex/_generated/api";
+import type { AdminUser } from "../types";
 import {
     ClipboardList,
     Search,
@@ -10,7 +11,7 @@ import {
     Activity,
 } from "lucide-react";
 
-export default function AuditLogs({ user }: { user?: any }) {
+export default function AuditLogs({ user }: { user?: AdminUser }) {
     const [searchTerm, setSearchTerm] = useState("");
     const [moduleFilter, setModuleFilter] = useState("All");
     const [actionFilter, setActionFilter] = useState("All");

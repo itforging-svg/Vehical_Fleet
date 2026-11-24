@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useAdminQuery as useQuery, useAdminMutation as useMutation } from "../hooks/adminConvex";
 import { api } from "../../convex/_generated/api";
+import type { AdminUser } from "../types";
 import { Plus, Edit2, Trash2, Fuel, DollarSign, TrendingUp, Calendar, Search, XCircle, Save } from "lucide-react";
 import { useLastOdometer } from "../hooks/useLastOdometer";
 
-export default function FuelManagement({ user }: { user?: any }) {
+export default function FuelManagement({ user }: { user?: AdminUser }) {
     const plant = user?.plant;
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingRecord, setEditingRecord] = useState<any>(null);
@@ -15,7 +16,7 @@ export default function FuelManagement({ user }: { user?: any }) {
 
     // Queries
     const vehicles = useQuery(api.vehicles.list, { plant }) || [];
-    const drivers = useQuery(api.drivers.list) || [];
+    const drivers = useQuery(api.drivers.list, {}) || [];
     const fuelRecords = useQuery(api.fuelRecords.list, { plant }) || [];
     // Mutations
     const createRecord = useMutation(api.fuelRecords.create);
@@ -71,7 +72,10 @@ export default function FuelManagement({ user }: { user?: any }) {
     const lastOdoForForm = useLastOdometer(showAddModal ? formData.vehicleId || undefined : undefined);
     useEffect(() => {
         if (lastOdoForForm !== null && showAddModal) {
-            setFormData(prev => ({ ...prev, currentOdometer: String(lastOdoForForm) }));
+            const frame = window.requestAnimationFrame(() => {
+                setFormData(prev => ({ ...prev, currentOdometer: String(lastOdoForForm) }));
+            });
+            return () => window.cancelAnimationFrame(frame);
         }
     }, [lastOdoForForm, showAddModal]);
 
@@ -136,7 +140,7 @@ export default function FuelManagement({ user }: { user?: any }) {
                 alert("Fuel record added successfully!");
             }
             resetForm();
-        } catch (error) {
+        } catch {
             alert("Failed to save fuel record.");
         }
     };
@@ -164,7 +168,7 @@ export default function FuelManagement({ user }: { user?: any }) {
         try {
             await deleteRecord({ id: id as any, performedBy: user?.name || "Unknown Admin" });
             setConfirmDeleteId(null);
-        } catch (error) {
+        } catch {
             alert("Failed to delete fuel record.");
         }
     };

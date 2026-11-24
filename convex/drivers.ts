@@ -1,11 +1,11 @@
-import { mutation, query } from "./_generated/server";
+import { adminMutation as mutation, adminQuery as query, assertPlantAccess } from "./functions";
 import { v } from "convex/values";
 
 export const list = query({
     args: {},
     handler: async (ctx) => {
         const all = await ctx.db.query("drivers").collect();
-        return all.filter(d => d.deletedAt === undefined);
+        return all.filter(d => d.deletedAt === undefined && (!ctx.admin.plant || d.plant === ctx.admin.plant));
     },
 });
 
@@ -33,6 +33,7 @@ export const create = mutation({
         aadharId: v.optional(v.id("_storage")),
     },
     handler: async (ctx, args) => {
+        assertPlantAccess(ctx.admin.plant, args.plant);
         const existing = await ctx.db
             .query("drivers")
             .withIndex("by_licenseNumber", (q) =>
@@ -82,6 +83,10 @@ export const update = mutation({
         performedBy: v.string(), // Added for auditing
     },
     handler: async (ctx, args) => {
+        const current = await ctx.db.get(args.id);
+        if (!current) throw new Error("Driver not found");
+        assertPlantAccess(ctx.admin.plant, current.plant);
+        assertPlantAccess(ctx.admin.plant, args.plant ?? current.plant);
         const { id, performedBy, ...data } = args;
         await ctx.db.patch(id, data);
         await ctx.db.insert("auditLogs", {
@@ -103,6 +108,8 @@ export const remove = mutation({
     },
     handler: async (ctx, args) => {
         const driver = await ctx.db.get(args.id);
+        if (!driver) throw new Error("Driver not found");
+        assertPlantAccess(ctx.admin.plant, driver.plant);
         await ctx.db.patch(args.id, { deletedAt: Date.now() });
         await ctx.db.insert("auditLogs", {
             action: "DELETE",
@@ -122,8 +129,9 @@ export const getPerformanceStats = query({
         // 1. Get all active drivers
         let drivers = (await ctx.db.query("drivers").collect()).filter(d => d.deletedAt === undefined);
 
-        if (args.plant) {
-            drivers = drivers.filter(d => d.plant === args.plant);
+        const plant = ctx.admin.plant ?? args.plant;
+        if (plant) {
+            drivers = drivers.filter(d => d.plant === plant);
         }
 
         // 2. Get all completed trips (to calculate Km driven & Trips count)

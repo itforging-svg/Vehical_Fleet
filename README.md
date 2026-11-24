@@ -7,8 +7,8 @@ A **premium, real-time logistics management portal** built for **Chandan Steel L
 ## 🚀 Live Deployment
 | | URL |
 |---|---|
-| 🌐 **Production Frontend** | Cloudflare Workers |
-| ⚙️ **Backend (Convex)** | Convex Cloud |
+| 🌐 **Production Frontend** | [fleet.chandansteel.net](https://fleet.chandansteel.net) (Cloudflare Pages) |
+| ⚙️ **Backend (Convex)** | `stoic-buffalo-424` (production) |
 
 ---
 
@@ -160,30 +160,27 @@ CONVEX_DEPLOYMENT=dev:your-deployment-name
 VITE_CONVEX_URL=https://your-deployment.convex.cloud
 ```
 
-For production builds, create `.env.production`:
+For production builds, copy `.env.production.example` to `.env.production`:
 ```env
-VITE_CONVEX_URL=https://your-production-deployment.convex.cloud
+VITE_CONVEX_URL=https://stoic-buffalo-424.eu-west-1.convex.cloud
 ```
 
 ---
 
 ## 🚢 Deployment
 
-### Frontend — Cloudflare Workers
+Set `.env.production` to the production Convex URL before building. The live frontend is the Cloudflare Pages project `vehical-fleet`; deploy the backend first, then the frontend:
+
 ```bash
+npx convex deploy
 npm run deploy
 ```
 
-### Backend — Convex Production
+For a new production database, create an admin account through the authenticated Convex CLI. Use a unique password with at least 12 characters:
 ```bash
-npx convex deploy --prod
+npx convex run --prod auth:provisionAdmin '{"adminId":"cslsuperadmin","password":"<unique-password>","name":"Super Admin"}'
 ```
-
-### Seed Admin Accounts
-After initial production deployment, seed the database:
-```bash
-npx convex run --prod seedAdmins:seed
-```
+Existing admin accounts and operational data are preserved by deployment. The former public seed endpoint has been removed; migrations are internal-only.
 
 ---
 

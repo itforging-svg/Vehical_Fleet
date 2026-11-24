@@ -3,9 +3,10 @@ import { Shield, Lock, User, ArrowLeft, LogIn, Truck, Users } from "lucide-react
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useNavigate } from "react-router-dom";
+import type { AdminUser } from "../types";
 
 interface LoginPageProps {
-    onLogin: (user: any) => void;
+    onLogin: (user: AdminUser, token: string, expiresAt: number) => void;
 }
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
@@ -17,7 +18,8 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     const navigate = useNavigate();
 
     useEffect(() => {
-        setIsVisible(true);
+        const frame = window.requestAnimationFrame(() => setIsVisible(true));
+        return () => window.cancelAnimationFrame(frame);
     }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -26,12 +28,13 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         try {
             const user = await login({ adminId: id, password });
             if (user) {
-                onLogin(user);
+                const { sessionToken, expiresAt, ...adminUser } = user;
+                onLogin(adminUser, sessionToken, expiresAt);
                 navigate("/dashboard");
             } else {
                 setError("Invalid ID or password");
             }
-        } catch (err) {
+        } catch {
             setError("Login failed. Please try again.");
         }
     };

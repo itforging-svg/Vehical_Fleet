@@ -1,38 +1,11 @@
-import { mutation } from "./_generated/server";
-import bcrypt from "bcryptjs";
+import { internalMutation } from "./_generated/server";
 
-export const seed = mutation({
+export const seed = internalMutation({
     args: {},
     handler: async (ctx) => {
-        // Delete existing admins to ensure clean state for hashing
-        const existing = await ctx.db.query("admins").collect();
-        for (const admin of existing) {
-            await ctx.db.delete(admin._id);
-        }
-
-        const admins = [
-            { adminId: "cslsuperadmin", password: "cslsuperadmin", name: "Super Admin", plant: undefined },
-            { adminId: "admin_seamless", password: "admin123", name: "Seamless Admin", plant: "Seamless" },
-            { adminId: "admin_forging", password: "admin123", name: "Forging Admin", plant: "Forging" },
-            { adminId: "admin_main", password: "admin123", name: "Main Plant Admin", plant: "Main Plant (SMS)" },
-            { adminId: "admin_bright", password: "admin123", name: "Bright Bar Admin", plant: "Bright Bar" },
-            { adminId: "admin_flat", password: "admin123", name: "Flat Bar Admin", plant: "Flat Bar" },
-            { adminId: "admin_wire", password: "admin123", name: "Wire Plant Admin", plant: "Wire Plant" },
-            { adminId: "admin_main2", password: "admin123", name: "Main Plant 2 Admin", plant: "Main Plant 2 ( SMS 2 )" },
-            { adminId: "admin_40inch", password: "admin123", name: "40Inch Mill Admin", plant: "40\"Inch Mill" },
-        ];
-
-        for (const admin of admins) {
-            const hashedPassword = bcrypt.hashSync(admin.password, 10);
-            await ctx.db.insert("admins", {
-                ...admin,
-                password: hashedPassword
-            });
-        }
-
-        // --- MIGRATION LOGIC ---
-        // 1. Update Vehicles
+        // This internal migration deliberately preserves all admin accounts.
         const db = ctx.db as any;
+        // 1. Update Vehicles
         const vehicles = await db.query("vehicles").collect();
         for (const v of vehicles) {
             if (v.locationPlant === "Seamsless") {
@@ -48,7 +21,7 @@ export const seed = mutation({
                     await db.patch(r._id, { plant: "Seamless" });
                 }
             }
-        } catch (e) { /* ignore if table doesn't exist */ }
+        } catch { /* ignore if table doesn't exist */ }
 
         // 3. Update Internal Movements
         try {
@@ -57,9 +30,9 @@ export const seed = mutation({
                 if (m.from === "Seamsless") await db.patch(m._id, { from: "Seamless" });
                 if (m.to === "Seamsless") await db.patch(m._id, { to: "Seamless" });
             }
-        } catch (e) { /* ignore if table doesn't exist */ }
+        } catch { /* ignore if table doesn't exist */ }
         // --- END MIGRATION LOGIC ---
 
-        return "Successfully seeded 9 admin accounts and migrated Seamsless -> Seamless";
+        return "Migrated Seamsless -> Seamless; admin accounts were preserved";
     },
 });

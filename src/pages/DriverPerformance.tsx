@@ -1,9 +1,10 @@
-import { useQuery } from "convex/react";
+import { useAdminQuery as useQuery } from "../hooks/adminConvex";
 import { api } from "../../convex/_generated/api";
+import type { AdminUser } from "../types";
 import { Activity, Trophy, Droplets, Award, Search } from "lucide-react";
 import { useState } from "react";
 
-export default function DriverPerformance({ user }: { user?: any }) {
+export default function DriverPerformance({ user }: { user?: AdminUser }) {
     const plant = user?.plant;
     const [searchTerm, setSearchTerm] = useState("");
 
