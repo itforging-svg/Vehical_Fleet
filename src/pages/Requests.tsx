@@ -6,6 +6,9 @@ import { useLastOdometer } from "../hooks/useLastOdometer";
 
 export default function Requests({ user }: { user?: any }) {
     const plant = user?.plant;
+    const performedBy = user?.name && user?.adminId
+        ? `${user.name} (${user.adminId})`
+        : user?.adminId || user?.name || "Unknown Admin";
     const requests = useQuery(api.requests.list, { plant }) || [];
     const vehicles = useQuery(api.vehicles.list, { plant }) || [];
     const drivers = useQuery(api.drivers.list, {}) || [];
@@ -69,7 +72,7 @@ export default function Requests({ user }: { user?: any }) {
                         startLocation: updates.pickupLocation,
                         endLocation: updates.dropLocation
                     },
-                    performedBy: user?.name || "Unknown Admin"
+                    performedBy
                 });
             }
             setEditingRequest(null);
@@ -98,7 +101,7 @@ export default function Requests({ user }: { user?: any }) {
     const handleAction = async (id: any, status: string) => {
         if (status === "approved") { setAssigningId(id); return; }
         if (confirm(`Are you sure you want to ${status} this request?`)) {
-            await updateStatus({ id, status, performedBy: user?.name || "Unknown Admin" });
+            await updateStatus({ id, status, performedBy });
         }
     };
 
@@ -112,7 +115,7 @@ export default function Requests({ user }: { user?: any }) {
                 vehicleId: selection.vehicleId as any,
                 driverId: selection.driverId as any,
                 startOdometer: Number(selection.startOdometer),
-                performedBy: user?.name || "Unknown Admin"
+                performedBy
             });
             setAssigningId(null);
             setSelection({ vehicleId: "", driverId: "", startOdometer: "" });

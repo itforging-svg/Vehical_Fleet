@@ -17,6 +17,7 @@ interface LayoutProps {
 
 const navItems = [
     { id: "dashboard", label: "Overview", icon: LayoutDashboard, path: "/dashboard" },
+    { id: "requests", label: "Vehicle Requests", icon: ClipboardList, path: "/requests" },
     { id: "audit-logs", label: "Audit Logs", icon: ClipboardList, path: "/audit-logs" },
     { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
     { id: "vehicles", label: "Fleet Management", icon: Truck, path: "/vehicles" },
