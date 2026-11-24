@@ -7,7 +7,7 @@ A **premium, real-time logistics management portal** built for **Chandan Steel L
 ## 🚀 Live Deployment
 | | URL |
 |---|---|
-| 🌐 **Production Frontend** | Cloudflare Pages |
+| 🌐 **Production Frontend** | Cloudflare Workers |
 | ⚙️ **Backend (Convex)** | Convex Cloud |
 
 ---
@@ -16,7 +16,7 @@ A **premium, real-time logistics management portal** built for **Chandan Steel L
 
 ```
 ┌─────────────────────────────────┐       ┌─────────────────────────────┐
-│   Cloudflare Pages (Frontend)   │ ─────▶│  Convex (Backend + Realtime │
+│  Cloudflare Workers (Frontend) │ ─────▶│  Convex (Backend + Realtime │
 │   React 19 + Vite + TypeScript  │       │  DB + Serverless Functions)  │
 └─────────────────────────────────┘       └─────────────────────────────┘
          │                                            │
@@ -124,7 +124,7 @@ Accessible at `/login` with role-based access:
 | **Icons** | Lucide React |
 | **Styling** | Tailwind CSS + Vanilla CSS |
 | **PDF/CSV Export** | jsPDF, jspdf-autotable, xlsx |
-| **Frontend Hosting** | Cloudflare Pages |
+| **Frontend Hosting** | Cloudflare Workers |
 
 ---
 
@@ -169,10 +169,9 @@ VITE_CONVEX_URL=https://your-production-deployment.convex.cloud
 
 ## 🚢 Deployment
 
-### Frontend — Cloudflare Pages
+### Frontend — Cloudflare Workers
 ```bash
-npm run build
-npx wrangler pages deploy dist --project-name vehical-fleet
+npm run deploy
 ```
 
 ### Backend — Convex Production

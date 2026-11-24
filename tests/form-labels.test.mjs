@@ -55,3 +55,12 @@ test("login page does not claim unimplemented access monitoring", () => {
   const loginPage = readFileSync(new URL("../src/pages/LoginPage.tsx", import.meta.url), "utf8");
   assert.doesNotMatch(loginPage, /access attempts are digitally logged and monitored/i);
 });
+
+test("deployment documentation matches the Wrangler Worker configuration", () => {
+  const readme = readFileSync(new URL("../README.md", import.meta.url), "utf8");
+  const packageJson = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  assert.match(readme, /Cloudflare Workers/);
+  assert.match(readme, /npm run deploy/);
+  assert.doesNotMatch(readme, /wrangler pages deploy/);
+  assert.match(packageJson.scripts.deploy, /wrangler deploy/);
+});
