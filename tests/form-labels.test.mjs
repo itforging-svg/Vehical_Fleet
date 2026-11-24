@@ -50,3 +50,8 @@ test("sampled form labels are associated with controls", () => {
     }
   }
 });
+
+test("login page does not claim unimplemented access monitoring", () => {
+  const loginPage = readFileSync(new URL("../src/pages/LoginPage.tsx", import.meta.url), "utf8");
+  assert.doesNotMatch(loginPage, /access attempts are digitally logged and monitored/i);
+});

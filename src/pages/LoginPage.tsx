@@ -138,7 +138,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
                     <div className="mt-10 pt-8 border-t border-slate-50">
                         <p className="text-[9px] text-center text-slate-400 font-bold uppercase tracking-[0.2em] leading-relaxed">
-                            Authorized personnel only. All access attempts are digitally logged and monitored by the system.
+                            Authorized personnel only. Contact your system administrator for access assistance.
                         </p>
                     </div>
                 </div>
