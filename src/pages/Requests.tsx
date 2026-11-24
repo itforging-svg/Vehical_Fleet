@@ -1,10 +1,11 @@
-import { useQuery, useMutation } from "convex/react";
+import { useAdminQuery as useQuery, useAdminMutation as useMutation } from "../hooks/adminConvex";
 import { api } from "../../convex/_generated/api";
+import type { AdminUser } from "../types";
 import { ClipboardList, CheckCircle, XCircle, Search, Clock, ArrowRight, Edit2, Save } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useLastOdometer } from "../hooks/useLastOdometer";
 
-export default function Requests({ user }: { user?: any }) {
+export default function Requests({ user }: { user?: AdminUser }) {
     const plant = user?.plant;
     const performedBy = user?.name && user?.adminId
         ? `${user.name} (${user.adminId})`
@@ -28,7 +29,10 @@ export default function Requests({ user }: { user?: any }) {
     const lastOdoForAssignment = useLastOdometer(assigningId ? selection.vehicleId || undefined : undefined);
     useEffect(() => {
         if (lastOdoForAssignment !== null && selection.vehicleId) {
-            setSelection(prev => ({ ...prev, startOdometer: String(lastOdoForAssignment) }));
+            const frame = window.requestAnimationFrame(() => {
+                setSelection(prev => ({ ...prev, startOdometer: String(lastOdoForAssignment) }));
+            });
+            return () => window.cancelAnimationFrame(frame);
         }
     }, [lastOdoForAssignment, selection.vehicleId]);
 
@@ -59,7 +63,15 @@ export default function Requests({ user }: { user?: any }) {
     const handleSaveEdit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const { _id, _creationTime, status, requestId, vehicleId, driverId, createdAt, ...updates } = editingRequest;
+            const { _id, requestId } = editingRequest;
+            const updates = { ...editingRequest };
+            delete updates._id;
+            delete updates._creationTime;
+            delete updates.status;
+            delete updates.requestId;
+            delete updates.vehicleId;
+            delete updates.driverId;
+            delete updates.createdAt;
             await updateRequestDetails({ id: _id, updates, performedBy: user?.name || "Unknown Admin" });
             const linkedTrip = trips.find(t => t.requestId === requestId);
             if (linkedTrip) {

@@ -9,7 +9,8 @@ export default function LandingPage() {
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
-        setIsVisible(true);
+        const frame = window.requestAnimationFrame(() => setIsVisible(true));
+        return () => window.cancelAnimationFrame(frame);
     }, []);
 
     const handleProceed = () => {
@@ -45,14 +46,7 @@ export default function LandingPage() {
             <header className="bg-[#0e2a63] text-white py-4 px-6 md:px-16 flex items-center justify-between shadow-lg sticky top-0 z-50">
                 <div className="flex items-center gap-5">
                     <div className="bg-white p-2.5 rounded-lg shadow-sm">
-                        <img
-                            src="https://www.chandansteel.net/images/logo-floated.png"
-                            alt="Chandan Steel Logo"
-                            className="h-10 md:h-12 object-contain"
-                            onError={(e) => {
-                                e.currentTarget.src = "https://www.chandansteel.net/wp-content/uploads/2018/06/logo.png";
-                            }}
-                        />
+                        <span className="h-10 md:h-12 min-w-10 flex items-center justify-center text-[#0e2a63] font-black tracking-tight" aria-label="Chandan Steel">CSL</span>
                     </div>
                     <div className="h-10 w-px bg-white/20 hidden md:block"></div>
                     <div className="flex flex-col justify-center">

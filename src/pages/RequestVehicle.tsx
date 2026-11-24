@@ -38,7 +38,7 @@ export default function RequestVehicle() {
         try {
             const result = await createRequest({ ...formData, performedBy: "Guest User" });
             setSubmittedId(result.requestId);
-        } catch (error) {
+        } catch {
             alert("Failed to submit request. Please try again.");
         } finally {
             setIsSubmitting(false);
@@ -121,28 +121,29 @@ export default function RequestVehicle() {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Full Name</label>
-                                        <input required className="input-field" placeholder="Enter Full Name" value={formData.requesterName} onChange={e => setFormData({ ...formData, requesterName: e.target.value })} />
+                                        <label htmlFor="requester-name" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Full Name</label>
+                                        <input id="requester-name" required className="input-field" placeholder="Enter Full Name" value={formData.requesterName} onChange={e => setFormData({ ...formData, requesterName: e.target.value })} />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Employee ID</label>
-                                        <input required className="input-field" placeholder="Enter Emp ID" value={formData.employeeId} onChange={e => setFormData({ ...formData, employeeId: e.target.value })} />
+                                        <label htmlFor="employee-id" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Employee ID</label>
+                                        <input id="employee-id" required className="input-field" placeholder="Enter Emp ID" value={formData.employeeId} onChange={e => setFormData({ ...formData, employeeId: e.target.value })} />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Department</label>
-                                        <input required className="input-field" placeholder="Enter Department" value={formData.department} onChange={e => setFormData({ ...formData, department: e.target.value })} />
+                                        <label htmlFor="department" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Department</label>
+                                        <input id="department" required className="input-field" placeholder="Enter Department" value={formData.department} onChange={e => setFormData({ ...formData, department: e.target.value })} />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Plant</label>
-                                        <select className="input-field" value={formData.plant} onChange={e => setFormData({ ...formData, plant: e.target.value })}>
+                                        <label htmlFor="plant" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Plant</label>
+                                        <select id="plant" className="input-field" value={formData.plant} onChange={e => setFormData({ ...formData, plant: e.target.value })}>
                                             {["Seamless", "Forging", "Main Plant (SMS)", "Bright Bar", "Flat Bar", "Wire Plant", "Main Plant 2 ( SMS 2 )", "40\"Inch Mill"].map(p => <option key={p} value={p}>{p}</option>)}
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Contact Number</label>
+                                        <label htmlFor="contact-number" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Contact Number</label>
                                         <div className="relative">
                                             <Phone size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                                             <input
+                                                id="contact-number"
                                                 required
                                                 type="tel"
                                                 className="input-field pl-12"
@@ -168,45 +169,45 @@ export default function RequestVehicle() {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Purpose</label>
-                                        <select className="input-field" value={formData.purpose} onChange={e => setFormData({ ...formData, purpose: e.target.value })}>
+                                        <label htmlFor="purpose" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Purpose</label>
+                                        <select id="purpose" className="input-field" value={formData.purpose} onChange={e => setFormData({ ...formData, purpose: e.target.value })}>
                                             {["Official", "Personal", "Client Visit", "Logistics"].map(p => <option key={p} value={p}>{p}</option>)}
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Priority</label>
-                                        <select className="input-field" value={formData.priority} onChange={e => setFormData({ ...formData, priority: e.target.value })}>
+                                        <label htmlFor="priority" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Priority</label>
+                                        <select id="priority" className="input-field" value={formData.priority} onChange={e => setFormData({ ...formData, priority: e.target.value })}>
                                             <option value="Normal">Normal</option>
                                             <option value="Urgent">Urgent</option>
                                             <option value="Emergency">Emergency</option>
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Trip Type</label>
-                                        <select className="input-field" value={formData.tripType} onChange={e => setFormData({ ...formData, tripType: e.target.value })}>
+                                        <label htmlFor="trip-type" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Trip Type</label>
+                                        <select id="trip-type" className="input-field" value={formData.tripType} onChange={e => setFormData({ ...formData, tripType: e.target.value })}>
                                             <option value="One-way">One-way</option>
                                             <option value="Round trip">Round trip</option>
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Pickup Location</label>
+                                        <label htmlFor="pickup-location" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Pickup Location</label>
                                         <div className="relative">
                                             <Navigation size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                                            <input required className="input-field pl-12" placeholder="Start Point" value={formData.pickupLocation} onChange={e => setFormData({ ...formData, pickupLocation: e.target.value })} />
+                                            <input id="pickup-location" required className="input-field pl-12" placeholder="Start Point" value={formData.pickupLocation} onChange={e => setFormData({ ...formData, pickupLocation: e.target.value })} />
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Drop Location</label>
+                                        <label htmlFor="drop-location" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Drop Location</label>
                                         <div className="relative">
                                             <MapPin size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                                            <input required className="input-field pl-12" placeholder="Destination" value={formData.dropLocation} onChange={e => setFormData({ ...formData, dropLocation: e.target.value })} />
+                                            <input id="drop-location" required className="input-field pl-12" placeholder="Destination" value={formData.dropLocation} onChange={e => setFormData({ ...formData, dropLocation: e.target.value })} />
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Required Vehicle Type</label>
+                                        <label htmlFor="vehicle-type" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Required Vehicle Type</label>
                                         <div className="relative">
                                             <Car size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                                            <select className="input-field pl-12" value={formData.vehicleType} onChange={e => setFormData({ ...formData, vehicleType: e.target.value })}>
+                                            <select id="vehicle-type" className="input-field pl-12" value={formData.vehicleType} onChange={e => setFormData({ ...formData, vehicleType: e.target.value })}>
                                                 {["Car", "Truck", "Bus", "2W", "JCB", "Hydra", "Dumper", "Tractor"].map(t => <option key={t} value={t}>{t}</option>)}
                                             </select>
                                         </div>
@@ -222,10 +223,11 @@ export default function RequestVehicle() {
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Proposed Pickup Date & Time</label>
+                                        <label htmlFor="booking-date-time" className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Proposed Pickup Date & Time</label>
                                         <div className="relative">
                                             <BadgeInfo size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                                             <input
+                                                id="booking-date-time"
                                                 type="datetime-local"
                                                 className="input-field pl-12"
                                                 value={formData.bookingDateTime}

@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { useMutation, useQuery } from "convex/react";
+import { useState, useRef, useId } from "react";
+import { useAdminMutation as useMutation, useAdminQuery as useQuery } from "../hooks/adminConvex";
 import { api } from "../../convex/_generated/api";
 import { UploadCloud, X, Loader2, CheckCircle2, Eye } from "lucide-react";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -22,6 +22,7 @@ export default function FileUpload({
     const [isUploading, setIsUploading] = useState(false);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const fileInputId = useId();
 
     const generateUploadUrl = useMutation(api.files.generateUploadUrl);
 
@@ -42,7 +43,7 @@ export default function FileUpload({
             setIsUploading(true);
 
             // 1. Get a short-lived upload URL from Convex
-            const postUrl = await generateUploadUrl();
+            const postUrl = await generateUploadUrl({});
 
             // 2. POST the file to the URL
             const result = await fetch(postUrl, {
@@ -75,13 +76,14 @@ export default function FileUpload({
 
     return (
         <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</label>
+            <label htmlFor={fileInputId} className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</label>
 
             <div className={`relative border-2 border-dashed rounded-xl p-4 transition-colors ${isUploading ? "border-blue-300 bg-blue-50/50" :
                 storageId ? "border-emerald-200 bg-emerald-50/30" :
                     "border-slate-200 hover:border-slate-300 bg-slate-50/50 hover:bg-slate-100/50"
                 }`}>
                 <input
+                    id={fileInputId}
                     type="file"
                     accept={acceptedTypes}
                     className="hidden"

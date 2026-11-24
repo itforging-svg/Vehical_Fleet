@@ -1,8 +1,9 @@
-import { useQuery } from "convex/react";
+import { useAdminQuery as useQuery } from "../hooks/adminConvex";
 import { api } from "../../convex/_generated/api";
+import type { AdminUser } from "../types";
 import { Truck, Users, MapPin, Gauge, ClipboardList, LayoutDashboard } from "lucide-react";
 
-export default function Dashboard({ user }: { user?: any }) {
+export default function Dashboard({ user }: { user?: AdminUser }) {
     const plant = user?.plant;
     const vehicles = useQuery(api.vehicles.list, { plant }) || [];
     const drivers = useQuery(api.drivers.list, {}) || [];

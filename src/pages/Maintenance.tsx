@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useAdminQuery as useQuery, useAdminMutation as useMutation } from "../hooks/adminConvex";
 import { api } from "../../convex/_generated/api";
+import type { AdminUser } from "../types";
 import { Plus, Search, FileText, Calendar, DollarSign, PenTool, X, Edit2, Trash2, Info } from "lucide-react";
 import type { Id } from "../../convex/_generated/dataModel";
 import { useLastOdometer } from "../hooks/useLastOdometer";
@@ -20,7 +21,7 @@ interface MaintenanceRecordForm {
     invoiceId?: Id<"_storage">;
 }
 
-export default function Maintenance({ user }: { user?: any }) {
+export default function Maintenance({ user }: { user?: AdminUser }) {
     const plant = user?.plant;
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingRecord, setEditingRecord] = useState<any>(null);
@@ -94,7 +95,7 @@ export default function Maintenance({ user }: { user?: any }) {
         try {
             await deleteRecord({ id: id as Id<"maintenanceRecords">, performedBy: user?.name || "Unknown Admin" });
             setConfirmDeleteId(null);
-        } catch (error) {
+        } catch {
             alert("Failed to delete record.");
         }
     };

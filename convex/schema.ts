@@ -135,6 +135,12 @@ export default defineSchema({
     name: v.string(),
   }).index("by_adminId", ["adminId"]),
 
+  adminSessions: defineTable({
+    token: v.string(),
+    adminId: v.string(),
+    expiresAt: v.number(),
+  }).index("by_token", ["token"]),
+
   fuelRecords: defineTable({
     vehicleId: v.id("vehicles"),
     registrationNumber: v.string(), // Denormalized for easy reference

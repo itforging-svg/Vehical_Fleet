@@ -3,9 +3,10 @@ import { Shield, Lock, User, ArrowLeft, LogIn, Truck, Users } from "lucide-react
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useNavigate } from "react-router-dom";
+import type { AdminUser } from "../types";
 
 interface LoginPageProps {
-    onLogin: (user: any) => void;
+    onLogin: (user: AdminUser, token: string, expiresAt: number) => void;
 }
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
@@ -17,7 +18,8 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     const navigate = useNavigate();
 
     useEffect(() => {
-        setIsVisible(true);
+        const frame = window.requestAnimationFrame(() => setIsVisible(true));
+        return () => window.cancelAnimationFrame(frame);
     }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -26,12 +28,13 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         try {
             const user = await login({ adminId: id, password });
             if (user) {
-                onLogin(user);
+                const { sessionToken, expiresAt, ...adminUser } = user;
+                onLogin(adminUser, sessionToken, expiresAt);
                 navigate("/dashboard");
             } else {
                 setError("Invalid ID or password");
             }
-        } catch (err) {
+        } catch {
             setError("Login failed. Please try again.");
         }
     };
@@ -82,7 +85,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="space-y-2">
-                            <label className="text-[11px] font-black uppercase tracking-[0.2em] text-[#0e2a63]/70 ml-1">
+                            <label htmlFor="admin-id" className="text-[11px] font-black uppercase tracking-[0.2em] text-[#0e2a63]/70 ml-1">
                                 Terminal ID
                             </label>
                             <div className="relative group/input">
@@ -90,6 +93,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                                     <User size={18} />
                                 </div>
                                 <input
+                                    id="admin-id"
                                     type="text"
                                     value={id}
                                     onChange={(e) => setId(e.target.value)}
@@ -101,7 +105,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[11px] font-black uppercase tracking-[0.2em] text-[#0e2a63]/70 ml-1">
+                            <label htmlFor="admin-password" className="text-[11px] font-black uppercase tracking-[0.2em] text-[#0e2a63]/70 ml-1">
                                 Access Code
                             </label>
                             <div className="relative group/input">
@@ -109,6 +113,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                                     <Shield size={18} />
                                 </div>
                                 <input
+                                    id="admin-password"
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
@@ -136,7 +141,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
                     <div className="mt-10 pt-8 border-t border-slate-50">
                         <p className="text-[9px] text-center text-slate-400 font-bold uppercase tracking-[0.2em] leading-relaxed">
-                            Authorized personnel only. All access attempts are digitally logged and monitored by the system.
+                            Authorized personnel only. Contact your system administrator for access assistance.
                         </p>
                     </div>
                 </div>

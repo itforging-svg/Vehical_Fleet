@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from "convex/react";
+import { useAdminQuery as useQuery, useAdminMutation as useMutation } from "../hooks/adminConvex";
 import { useEffect } from "react";
 import { api } from "../../convex/_generated/api";
 import { Bell, Clock, ShieldAlert, CheckCheck, CheckCircle2, Truck, ShieldCheck, FileText, Activity } from "lucide-react";
@@ -10,7 +10,7 @@ export default function NotificationPage() {
     const syncExpiries = useMutation(api.notifications.syncExpiries);
 
     useEffect(() => {
-        syncExpiries();
+        syncExpiries({});
     }, [syncExpiries]);
 
     const unread = notifications.filter((n: any) => n.status === "unread");
@@ -128,7 +128,7 @@ export default function NotificationPage() {
                         </span>
                     )}
                     <button
-                        onClick={() => markAllAsRead()}
+                        onClick={() => markAllAsRead({})}
                         className="btn-ghost"
                     >
                         <CheckCheck size={16} className="text-emerald-500" />

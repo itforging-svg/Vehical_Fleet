@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Navigation, ArrowLeft, CheckCircle2 } from "lucide-react";
-import { useQuery, useMutation } from "convex/react";
+import { useAdminQuery as useQuery, useAdminMutation as useMutation } from "../hooks/adminConvex";
 import { api } from "../../convex/_generated/api";
 import PageWrapper from "../components/PageWrapper";
 import { useLastOdometer } from "../hooks/useLastOdometer";
@@ -82,7 +82,7 @@ export default function InternalMovement() {
 
             setSuccess(true);
             setTimeout(() => navigate("/"), 2000);
-        } catch (err) {
+        } catch {
             alert("Failed to log movement.");
         } finally {
             setIsSubmitting(false);

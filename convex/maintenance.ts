@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { adminMutation as mutation, adminQuery as query, assertPlantAccess, assertSuperAdmin } from "./functions";
 
 // List maintenance records with soft delete filtering
 export const list = query({
@@ -10,8 +10,9 @@ export const list = query({
     handler: async (ctx, args) => {
         let records = (await ctx.db.query("maintenanceRecords").collect()).filter(r => r.deletedAt === undefined);
 
-        if (args.plant) {
-            records = records.filter(r => r.plant === args.plant);
+        const plant = ctx.admin.plant ?? args.plant;
+        if (plant) {
+            records = records.filter(r => r.plant === plant);
         }
 
         if (args.vehicleId) {
@@ -30,8 +31,9 @@ export const getStats = query({
     handler: async (ctx, args) => {
         let records = (await ctx.db.query("maintenanceRecords").collect()).filter(r => r.deletedAt === undefined);
 
-        if (args.plant) {
-            records = records.filter(r => r.plant === args.plant);
+        const plant = ctx.admin.plant ?? args.plant;
+        if (plant) {
+            records = records.filter(r => r.plant === plant);
         }
 
         const now = Date.now();
@@ -73,6 +75,10 @@ export const create = mutation({
         invoiceId: v.optional(v.id("_storage")),
     },
     handler: async (ctx, args) => {
+        assertSuperAdmin(ctx.admin.adminId);
+        assertPlantAccess(ctx.admin.plant, args.plant);
+        const vehicle = await ctx.db.get(args.vehicleId);
+        assertPlantAccess(ctx.admin.plant, vehicle?.locationPlant);
         // Auto-update vehicle status
         if (args.status === "In Progress") {
             await ctx.db.patch(args.vehicleId, { status: "In Maintenance" });
@@ -113,9 +119,16 @@ export const update = mutation({
         performedBy: v.string(), // Added for auditing
     },
     handler: async (ctx, args) => {
+        assertSuperAdmin(ctx.admin.adminId);
         const { id, performedBy, ...data } = args;
         const record = await ctx.db.get(id);
         if (!record) return;
+        assertPlantAccess(ctx.admin.plant, record.plant);
+        assertPlantAccess(ctx.admin.plant, data.plant ?? record.plant);
+        if (data.vehicleId) {
+            const vehicle = await ctx.db.get(data.vehicleId);
+            assertPlantAccess(ctx.admin.plant, vehicle?.locationPlant);
+        }
 
         // Auto-update vehicle status based on maintenance status
         if (data.status) {
@@ -146,7 +159,10 @@ export const remove = mutation({
         performedBy: v.string(), // Added for auditing
     },
     handler: async (ctx, args) => {
+        assertSuperAdmin(ctx.admin.adminId);
         const record = await ctx.db.get(args.id);
+        if (!record) throw new Error("Maintenance record not found");
+        assertPlantAccess(ctx.admin.plant, record.plant);
         await ctx.db.patch(args.id, { deletedAt: Date.now() });
 
         await ctx.db.insert("auditLogs", {

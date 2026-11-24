@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { adminMutation as mutation, adminQuery as query, assertPlantAccess, assertTripPlantAccess } from "./functions";
 import { v } from "convex/values";
 import { generateCslId } from "./idHelper";
 
@@ -6,8 +6,9 @@ export const list = query({
     args: { plant: v.optional(v.string()) },
     handler: async (ctx, args) => {
         const trips = await ctx.db.query("trips").collect();
-        if (args.plant) {
-            return trips.filter(t => t.startLocation === args.plant || t.endLocation === args.plant);
+        const plant = ctx.admin.plant ?? args.plant;
+        if (plant) {
+            return trips.filter(t => t.startLocation === plant || t.endLocation === plant);
         }
         return trips;
     },
@@ -27,6 +28,7 @@ export const createRequest = mutation({
         performedBy: v.string(), // Added for auditing
     },
     handler: async (ctx, args) => {
+        if (ctx.admin.plant && args.startLocation !== ctx.admin.plant) throw new Error("Forbidden: invalid source plant");
         // Generate unique CSL ID for internal movement
         const { performedBy, ...tripData } = args;
         const requestId = await generateCslId(ctx, "trips");
@@ -57,6 +59,12 @@ export const assignVehicle = mutation({
     handler: async (ctx, args) => {
         const { id, performedBy, ...data } = args;
         const trip = await ctx.db.get(id);
+        if (!trip) throw new Error("Trip not found");
+        assertTripPlantAccess(ctx.admin.plant, trip.startLocation, trip.endLocation);
+        const vehicle = await ctx.db.get(data.vehicleId);
+        const driver = await ctx.db.get(data.driverId);
+        assertPlantAccess(ctx.admin.plant, vehicle?.locationPlant);
+        assertPlantAccess(ctx.admin.plant, driver?.plant);
         await ctx.db.patch(id, data);
 
         await ctx.db.insert("auditLogs", {
@@ -82,6 +90,8 @@ export const updateStatus = mutation({
     handler: async (ctx, args) => {
         const { id, status, endTime, endOdometer, performedBy } = args;
         const trip = await ctx.db.get(id);
+        if (!trip) throw new Error("Trip not found");
+        assertTripPlantAccess(ctx.admin.plant, trip.startLocation, trip.endLocation);
         await ctx.db.patch(id, { status, endTime, endOdometer });
 
         await ctx.db.insert("auditLogs", {
@@ -138,6 +148,9 @@ export const updateDetails = mutation({
     },
     handler: async (ctx, args) => {
         const trip = await ctx.db.get(args.id);
+        if (!trip) throw new Error("Trip not found");
+        assertTripPlantAccess(ctx.admin.plant, trip.startLocation, trip.endLocation);
+        assertTripPlantAccess(ctx.admin.plant, args.updates.startLocation ?? trip.startLocation, args.updates.endLocation ?? trip.endLocation);
         await ctx.db.patch(args.id, args.updates);
 
         await ctx.db.insert("auditLogs", {

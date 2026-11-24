@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useAdminQuery as useQuery, useAdminMutation as useMutation } from "../hooks/adminConvex";
 import { api } from "../../convex/_generated/api";
+import type { AdminUser } from "../types";
 import { Plus, Search, Filter, Truck, X, Save, Trash2, Edit2, ShieldCheck, FileText, Landmark, ClipboardList } from "lucide-react";
 import type { Id } from "../../convex/_generated/dataModel";
 import FileUpload from "../components/FileUpload";
@@ -41,7 +42,7 @@ interface Vehicle {
     pucId?: Id<"_storage">;
 }
 
-export default function Vehicles({ user }: { user?: any }) {
+export default function Vehicles({ user }: { user?: AdminUser }) {
     const plant = user?.plant;
     const vehicles = useQuery(api.vehicles.list, { plant }) || [];
     const createVehicle = useMutation(api.vehicles.create);
@@ -160,7 +161,7 @@ export default function Vehicles({ user }: { user?: any }) {
                 await createVehicle({ ...formData, addedBy: user?.adminId || "cslsuperadmin" });
             }
             // Trigger expiry sync
-            await syncExpiries();
+            await syncExpiries({});
             setIsModalOpen(false);
         } catch (error: any) {
             alert(error.message || "Failed to save vehicle.");
@@ -173,7 +174,7 @@ export default function Vehicles({ user }: { user?: any }) {
         if (window.confirm(`Are you sure you want to delete vehicle ${regNo}?`)) {
             try {
                 await removeVehicle({ id: id as any, performedBy: user?.name || "Unknown Admin" });
-            } catch (error) {
+            } catch {
                 alert("Failed to delete vehicle.");
             }
         }

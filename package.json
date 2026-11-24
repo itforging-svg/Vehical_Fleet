@@ -7,13 +7,15 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "test": "node --test",
     "preview": "npm run build && wrangler dev",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler pages deploy dist --project-name vehical-fleet --branch main"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "convex": "^1.31.7",
+    "convex-helpers": "^0.1.136",
     "jspdf": "^4.2.0",
     "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.563.0",
