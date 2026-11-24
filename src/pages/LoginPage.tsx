@@ -4,6 +4,7 @@ import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useNavigate } from "react-router-dom";
 import type { AdminUser } from "../types";
+import { AttributionFooter } from "../components/AttributionFooter";
 
 interface LoginPageProps {
     onLogin: (user: AdminUser, token: string, expiresAt: number) => void;
@@ -146,6 +147,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                     </div>
                 </div>
             </div>
+            <AttributionFooter className="relative z-10 mt-6" />
         </div>
     );
 }
