@@ -16,7 +16,7 @@ A **premium, real-time logistics management portal** built for **Chandan Steel L
 
 ```
 ┌─────────────────────────────────┐       ┌─────────────────────────────┐
-│  Cloudflare Workers (Frontend) │ ─────▶│  Convex (Backend + Realtime │
+│  Cloudflare Pages (Frontend)  │ ─────▶│  Convex (Backend + Realtime │
 │   React 19 + Vite + TypeScript  │       │  DB + Serverless Functions)  │
 └─────────────────────────────────┘       └─────────────────────────────┘
          │                                            │
@@ -108,6 +108,13 @@ Accessible at `/login` with role-based access:
 - Passwords are hashed with **bcryptjs** (10 rounds)
 - **Session Timeout**: Auto-logout after 10 minutes of inactivity, with a 60-second warning countdown
 - All mutations require a `performedBy` field for complete audit trails
+- Admin sessions are passed with protected Convex requests and validated by backend functions
+
+### Proprietary Attribution
+
+Every page, including the public portals, login screen, and admin screens, displays this footer:
+
+**Proprietary for Chandan Steel Ltd. Developed by Atharv Dhapre ( IT Dept ).**
 
 ---
 
@@ -124,7 +131,7 @@ Accessible at `/login` with role-based access:
 | **Icons** | Lucide React |
 | **Styling** | Tailwind CSS + Vanilla CSS |
 | **PDF/CSV Export** | jsPDF, jspdf-autotable, xlsx |
-| **Frontend Hosting** | Cloudflare Workers |
+| **Frontend Hosting** | Cloudflare Pages (`vehical-fleet`, production branch `main`) |
 
 ---
 
@@ -169,7 +176,7 @@ VITE_CONVEX_URL=https://stoic-buffalo-424.eu-west-1.convex.cloud
 
 ## 🚢 Deployment
 
-Set `.env.production` to the production Convex URL before building. The live frontend is the Cloudflare Pages project `vehical-fleet`; deploy the backend first, then the frontend:
+Set `.env.production` to the production Convex URL before building. The live frontend is the Cloudflare Pages project `vehical-fleet` at [fleet.chandansteel.net](https://fleet.chandansteel.net). Deploy the backend first, then the frontend. `npm run deploy` builds the app and publishes the `dist` directory to the Pages production branch `main`:
 
 ```bash
 npx convex deploy
@@ -236,6 +243,3 @@ Vehical_Fleet/
 ```
 
 ---
-**
-Proprietary for Chandan Steel Ltd. Developed by Atharv Dhapre ( IT Dept ).
-**
