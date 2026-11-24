@@ -140,7 +140,7 @@ Accessible at `/login` with role-based access:
 ```bash
 # 1. Clone the repository
 git clone https://github.com/itforging-svg/Vehical_Fleet.git
-cd Vehical_FleetB
+cd Vehical_Fleet
 
 # 2. Install dependencies
 npm install

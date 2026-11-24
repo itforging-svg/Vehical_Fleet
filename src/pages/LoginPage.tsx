@@ -82,7 +82,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="space-y-2">
-                            <label className="text-[11px] font-black uppercase tracking-[0.2em] text-[#0e2a63]/70 ml-1">
+                            <label htmlFor="admin-id" className="text-[11px] font-black uppercase tracking-[0.2em] text-[#0e2a63]/70 ml-1">
                                 Terminal ID
                             </label>
                             <div className="relative group/input">
@@ -90,6 +90,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                                     <User size={18} />
                                 </div>
                                 <input
+                                    id="admin-id"
                                     type="text"
                                     value={id}
                                     onChange={(e) => setId(e.target.value)}
@@ -101,7 +102,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[11px] font-black uppercase tracking-[0.2em] text-[#0e2a63]/70 ml-1">
+                            <label htmlFor="admin-password" className="text-[11px] font-black uppercase tracking-[0.2em] text-[#0e2a63]/70 ml-1">
                                 Access Code
                             </label>
                             <div className="relative group/input">
@@ -109,6 +110,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                                     <Shield size={18} />
                                 </div>
                                 <input
+                                    id="admin-password"
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
