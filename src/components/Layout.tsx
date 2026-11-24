@@ -7,6 +7,7 @@ import { twMerge } from "tailwind-merge";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import type { AdminUser } from "../types";
 import type { Doc } from "../../convex/_generated/dataModel";
+import { AttributionFooter } from "./AttributionFooter";
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -318,6 +319,7 @@ export function Layout({ user, onLogout }: LayoutProps) {
                 )}>
                     <Outlet />
                 </div>
+                <AttributionFooter className="border-t border-slate-200 bg-white/80" />
             </main>
         </div>
     );

@@ -1,5 +1,6 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { Shield, Truck, Users, LayoutDashboard } from "lucide-react";
+import { AttributionFooter } from "./AttributionFooter";
 
 interface PageWrapperProps {
     children: ReactNode;
@@ -72,9 +73,7 @@ export default function PageWrapper({ children, onSelectOption, showAdminButton 
             </main>
 
             {/* Footer */}
-            <footer className="py-6 text-center text-slate-400 text-xs font-medium z-10">
-                © {new Date().getFullYear()} Chandan Steel Ltd. All rights reserved.
-            </footer>
+            <AttributionFooter className="z-10" />
         </div>
     );
 }

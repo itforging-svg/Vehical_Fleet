@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Shield, Truck, Users, ArrowRight, LayoutDashboard } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
+import { AttributionFooter } from "../components/AttributionFooter";
 
 export default function LandingPage() {
     const navigate = useNavigate();
@@ -186,9 +187,7 @@ export default function LandingPage() {
             </main>
 
             {/* Footer */}
-            <footer className="py-6 text-center text-slate-400 text-xs font-medium z-10">
-                © {new Date().getFullYear()} Chandan Steel Ltd. All rights reserved.
-            </footer>
+            <AttributionFooter className="z-10" />
         </div>
     );
 }
